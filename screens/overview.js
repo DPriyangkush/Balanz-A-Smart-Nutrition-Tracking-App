@@ -10,7 +10,7 @@ export default function Overview() {
 
   return (
     <View style={styles.container}>
-      <ScreenContent path="screens/overview.tsx" title="Overview"></ScreenContent>
+      <ScreenContent path="screens/overview.js" title="Overview"></ScreenContent>
       <Button
         onPress={() =>
           navigation.navigate('Details', {

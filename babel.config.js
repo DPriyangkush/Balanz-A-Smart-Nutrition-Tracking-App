@@ -8,7 +8,12 @@ module.exports = function (api) {
       components: ['tamagui'],
       config: './tamagui.config.ts',
     },
-  ]);
+  ],
+  ['module:react-native-dotenv']
+
+);
+
+  plugins.push('react-native-reanimated/plugin');
 
   return {
     presets: ['babel-preset-expo'],
