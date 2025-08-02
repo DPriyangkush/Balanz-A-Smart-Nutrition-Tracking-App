@@ -1,9 +1,44 @@
-import React from 'react'
-import { Input, YStack } from 'tamagui'
+import React, { useEffect, useRef } from 'react'
+import { Animated } from 'react-native'
+import { Input, YStack, Text } from 'tamagui'
 
-const FullWidthInput = ({ value, onChangeText, placeholder, ...props }) => {
+const FullWidthInput = ({ value, onChangeText, placeholder, hasError, ...props }) => {
+  const shakeAnim = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    if (hasError) {
+      Animated.sequence([
+        Animated.timing(shakeAnim, {
+          toValue: 5,
+          duration: 50,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shakeAnim, {
+          toValue: -5,
+          duration: 50,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shakeAnim, {
+          toValue: 3,
+          duration: 50,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shakeAnim, {
+          toValue: -3,
+          duration: 50,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shakeAnim, {
+          toValue: 0,
+          duration: 50,
+          useNativeDriver: true,
+        }),
+      ]).start()
+    }
+  }, [hasError])
+
   return (
-    <YStack width="100%" paddingHorizontal="$4">
+    <YStack width="100%" paddingHorizontal="$4" position="relative">
       <Input
         value={value}
         onChangeText={onChangeText}
@@ -11,12 +46,24 @@ const FullWidthInput = ({ value, onChangeText, placeholder, ...props }) => {
         size="$6"
         backgroundColor="#fff"
         color="#1e1e1e"
-        borderColor="#1e1e1e"
+        borderColor={hasError ? 'red' : '#1e1e1e'}
         borderWidth={1}
         borderRadius="$6"
         paddingHorizontal="$3"
         {...props}
       />
+      {hasError && (
+        <Animated.View
+          style={{
+            position: 'absolute',
+            right: 30,
+            top: 20,
+            transform: [{ translateX: shakeAnim }],
+          }}
+        >
+          <Text fontSize={16}>⚠️</Text>
+        </Animated.View>
+      )}
     </YStack>
   )
 }

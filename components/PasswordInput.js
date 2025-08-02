@@ -6,7 +6,7 @@ const PasswordInput = ({ value, onChangeText, placeholder, ...props }) => {
   const [secure, setSecure] = useState(true)
 
   return (
-    <YStack width="100%" paddingHorizontal="$4">
+    <YStack width="100%" paddingHorizontal="$4" mb="$4">
       <XStack
         alignItems="center"
         borderWidth={1}

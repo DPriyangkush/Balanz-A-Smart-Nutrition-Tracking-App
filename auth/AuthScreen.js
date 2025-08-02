@@ -2,23 +2,34 @@ import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
   Animated,
 } from 'react-native';
 import { AntDesign, Entypo, FontAwesome } from '@expo/vector-icons';
+import FullWidthButton from 'components/FullWidthButton';
 import FullWidthInput from 'components/FullWidthInput';
 import PasswordInput from 'components/PasswordInput';
-import FullWidthButton from 'components/FullWidthButton';
 import { YStack } from 'tamagui';
 import { useNavigation } from '@react-navigation/native';
+import { auth, db } from '../firebaseConfig';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 
 const AuthScreen = () => {
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState('login');
   const slideAnim = useRef(new Animated.Value(0)).current;
+
+  const [form, setForm] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    password: '',
+  });
+
+  const [errors, setErrors] = useState({});
 
   const switchTab = (tab) => {
     setActiveTab(tab);
@@ -27,58 +38,111 @@ const AuthScreen = () => {
       duration: 250,
       useNativeDriver: false,
     }).start();
+    setErrors({});
+    setForm({ fullName: '', email: '', phone: '', password: '' });
+  };
+
+  const handleChange = (name, value) => {
+    setForm({ ...form, [name]: value });
+    setErrors({ ...errors, [name]: '' });
+  };
+
+  const validate = () => {
+    const newErrors = {};
+    if (activeTab === 'signup' && !form.fullName.trim()) newErrors.fullName = 'Full Name is required';
+    if (!form.email.includes('@')) newErrors.email = 'Valid email required';
+    if (activeTab === 'signup' && !/^\d{10}$/.test(form.phone)) newErrors.phone = 'Valid phone number required';
+    if (form.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSignUp = async () => {
+    if (!validate()) return;
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+      const user = userCredential.user;
+      await setDoc(doc(db, 'users', user.uid), {
+        fullName: form.fullName,
+        email: form.email,
+        phone: form.phone,
+      });
+      alert('Sign Up Successful!');
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const handleLogin = async () => {
+    if (!validate()) return;
+    try {
+      await signInWithEmailAndPassword(auth, form.email, form.password);
+      alert('Login Successful!');
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   const renderLoginForm = () => (
     <>
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Email or Phone</Text>
-        <FullWidthInput />
-      </View>
+      <FullWidthInput mb="$3"
+        value={form.email}
+        onChangeText={(val) => handleChange('email', val)}
+        placeholder="Enter your email"
+        hasError={!!errors.email}
+      />
+      {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Password</Text>
-        <PasswordInput />
-      </View>
+      <PasswordInput
+        value={form.password}
+        onChangeText={(val) => handleChange('password', val)}
+        placeholder="Enter your password"
+      />
+      {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
       <TouchableOpacity>
         <Text style={styles.forgotPassword}>Forgot Password?</Text>
       </TouchableOpacity>
-
-      <FullWidthButton title="Login" />
+      <FullWidthButton title="Login" onPress={handleLogin} />
     </>
   );
 
   const renderSignUpForm = () => (
     <>
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Full Name</Text>
-        <FullWidthInput />
-      </View>
+      <FullWidthInput mb="$3"
+        value={form.fullName}
+        onChangeText={(val) => handleChange('fullName', val)}
+        placeholder="Enter your name"
+      />
+      {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Email</Text>
-        <FullWidthInput />
-      </View>
+      <FullWidthInput mb="$3"
+        value={form.email}
+        onChangeText={(val) => handleChange('email', val)}
+        placeholder="Enter your email"
+        hasError={!!errors.email}
+      />
+      {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Phone Number</Text>
-        <FullWidthInput />
-      </View>
+      <FullWidthInput mb="$3"
+        value={form.phone}
+        onChangeText={(val) => handleChange('phone', val)}
+        placeholder="Enter your phone"
+        keyboardType="phone-pad"
+        hasError={!!errors.phone}
+      />
+      {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Password</Text>
-        <PasswordInput />
-      </View>
+      <PasswordInput 
+        value={form.password}
+        onChangeText={(val) => handleChange('password', val)}
+        placeholder="Enter your password"
+      />
+      {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
-      <FullWidthButton title="Sign Up"  />
+      <FullWidthButton title="Sign Up" onPress={handleSignUp}  />
     </>
   );
-
-  const underlineTranslate = slideAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '50%'],
-  });
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -102,7 +166,14 @@ const AuthScreen = () => {
           style={[
             styles.animatedUnderline,
             {
-              transform: [{ translateX: slideAnim.interpolate({ inputRange: [0, 1], outputRange: [50, 200] }) }],
+              transform: [
+                {
+                  translateX: slideAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [50, 200],
+                  }),
+                },
+              ],
             },
           ]}
         />
@@ -159,6 +230,7 @@ const AuthScreen = () => {
 };
 
 export default AuthScreen;
+
 const styles = StyleSheet.create({
   container: {
     padding: 20,
@@ -213,15 +285,6 @@ const styles = StyleSheet.create({
     width: 140,
     backgroundColor: '#000',
   },
-  inputGroup: {
-    marginBottom: 12,
-  },
-  label: {
-    fontSize: 14,
-    marginBottom: 6,
-    paddingLeft: 20,
-    color: '#333',
-  },
   forgotPassword: {
     alignSelf: 'flex-end',
     marginRight: 20,
@@ -249,11 +312,17 @@ const styles = StyleSheet.create({
     width: '50%',
     fontSize: 12,
     color: '#777',
-    marginTop: 30,
+    marginTop: 15,
   },
   link: {
     color: '#007BFF',
     textDecorationLine: 'underline',
   },
-  
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 26,
+    marginBottom: 8,
+  },
 });
