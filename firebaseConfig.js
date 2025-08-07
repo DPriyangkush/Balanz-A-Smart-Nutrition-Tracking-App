@@ -8,6 +8,7 @@ import {
 } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFirestore } from 'firebase/firestore';
+
 import {
   API_KEY,
   AUTH_DOMAIN,
@@ -43,4 +44,5 @@ try {
 // Initialize Firestore
 const db = getFirestore(app);
 
-export { auth, db };
+export { auth, db, app as firebaseApp };
+

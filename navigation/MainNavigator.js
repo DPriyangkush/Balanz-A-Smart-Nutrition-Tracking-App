@@ -6,6 +6,9 @@ import { BackButton } from '../components/BackButton';
 import SplashScreen from '../screens/SplashScreen';
 import Onboarding from 'OnboardingScreen';
 import AuthScreen from 'auth/AuthScreen';
+import ForgotPasswordScreen from 'screens/ForgotPasswordScreen';
+import VerifyOTPScreen from 'screens/VerifyOTPScreen';
+import PasswordCreationScreen from 'screens/PasswordCreationScreen';
 
 const Stack = createStackNavigator();
 
@@ -32,6 +35,21 @@ const MainNavigator = () => {
       <Stack.Screen
         name="AuthScreen"
         component={AuthScreen}
+        options={{ headerShown: false, animation: "reveal_from_bottom"} }
+      />
+      <Stack.Screen
+        name="ForgotPasswordScreen"
+        component={ForgotPasswordScreen}
+        options={{ headerShown: false, animation: "reveal_from_bottom"} }
+      />
+      <Stack.Screen
+        name="VerifyOTPScreen"
+        component={VerifyOTPScreen}
+        options={{ headerShown: false, animation: "reveal_from_bottom"} }
+      />
+      <Stack.Screen
+        name="PasswordCreationScreen"
+        component={PasswordCreationScreen}
         options={{ headerShown: false, animation: "reveal_from_bottom"} }
       />
     </Stack.Navigator>

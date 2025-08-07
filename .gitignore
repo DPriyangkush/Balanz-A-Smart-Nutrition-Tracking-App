@@ -19,6 +19,9 @@ firebase.rc
 .firebaserc
 google-services.json
 GoogleService-Info.plist
+firebase-functions/functions/.env
+firebase-functions/lib/
+.firebase/
 
 # Sensitive Firebase credentials
 *.jks
@@ -50,9 +53,15 @@ android/
 .env
 .env.local
 .env.*.local
+.env.development
+.env.production
 
 # Misc
 *.swp
 *.swo
 *.tmp
 .cache/
+.output/
+.turbo/
+coverage/
+.parcel-cache/

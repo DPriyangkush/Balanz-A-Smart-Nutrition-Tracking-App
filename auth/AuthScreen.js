@@ -17,6 +17,8 @@ import { auth, db } from '../firebaseConfig';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 
+
+
 const AuthScreen = () => {
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState('login');
@@ -83,6 +85,9 @@ const AuthScreen = () => {
     }
   };
 
+  
+
+
   const renderLoginForm = () => (
     <>
       <FullWidthInput mb="$3"
@@ -100,7 +105,7 @@ const AuthScreen = () => {
       />
       {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
-      <TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate("ForgotPasswordScreen")}>
         <Text style={styles.forgotPassword}>Forgot Password?</Text>
       </TouchableOpacity>
       <FullWidthButton title="Login" onPress={handleLogin} />
