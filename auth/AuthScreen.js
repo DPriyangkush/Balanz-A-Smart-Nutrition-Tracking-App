@@ -69,7 +69,8 @@ const AuthScreen = () => {
         email: form.email,
         phone: form.phone,
       });
-      alert('Sign Up Successful!');
+      navigation.navigate('PersonalInfoScreen', { userId: user.uid });
+      console.log("Signup Successfull!");
     } catch (error) {
       alert(error.message);
     }

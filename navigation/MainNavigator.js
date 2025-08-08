@@ -9,6 +9,8 @@ import AuthScreen from 'auth/AuthScreen';
 import ForgotPasswordScreen from 'screens/ForgotPasswordScreen';
 import VerifyOTPScreen from 'screens/VerifyOTPScreen';
 import PasswordCreationScreen from 'screens/PasswordCreationScreen';
+import PersonalInfoScreen from 'screens/PersonalInfoScreen';
+import GoalPreferenceScreen from 'screens/GoalPreferenceScreen';
 
 const Stack = createStackNavigator();
 
@@ -51,6 +53,16 @@ const MainNavigator = () => {
         name="PasswordCreationScreen"
         component={PasswordCreationScreen}
         options={{ headerShown: false, animation: "reveal_from_bottom"} }
+      />
+      <Stack.Screen
+        name="PersonalInfoScreen"
+        component={PersonalInfoScreen}
+        options={{ headerShown: false, animation: "reveal_from_bottom"} }
+      />
+      <Stack.Screen
+        name="GoalPreferenceScreen"
+        component={GoalPreferenceScreen}
+        options={{ headerShown: false, animation: "slide_from_right"} }
       />
     </Stack.Navigator>
   );
