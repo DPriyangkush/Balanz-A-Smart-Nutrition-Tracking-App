@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 15,
     overflow: 'hidden',
     elevation: 8,
     shadowColor: '#000',
@@ -263,6 +263,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e0e0e0',
     zIndex: 1001,
+    
   },
   option: {
     paddingVertical: 16,
