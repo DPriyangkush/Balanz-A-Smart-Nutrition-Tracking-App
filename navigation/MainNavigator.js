@@ -12,6 +12,7 @@ import PasswordCreationScreen from 'screens/PasswordCreationScreen';
 import PersonalInfoScreen from 'screens/PersonalInfoScreen';
 import GoalPreferenceScreen from 'screens/GoalPreferenceScreen';
 import DietPreferenceScreen from 'screens/DietPreferenceScreen';
+import DashboardScreen from 'screens/DashboardScreen';
 
 const Stack = createStackNavigator();
 
@@ -69,6 +70,11 @@ const MainNavigator = () => {
         name="DietPreferenceScreen"
         component={DietPreferenceScreen}
         options={{ headerShown: false, animation: "slide_from_right"} }
+      />
+      <Stack.Screen
+        name="DashboardScreen"
+        component={DashboardScreen}
+        options={{ headerShown: false, animation: "reveal_from_bottom"} }
       />
     </Stack.Navigator>
   );

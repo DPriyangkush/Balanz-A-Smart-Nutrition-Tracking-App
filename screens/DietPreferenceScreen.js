@@ -33,6 +33,9 @@ const getResponsiveFontSize = (size) => {
 const isTablet = screenWidth >= 768;
 const isSmallScreen = screenWidth < 350;
 
+
+
+
 // Custom Animated Button Component
 const AnimatedDietButton = ({ type, isSelected, onPress }) => {
   const scale = useSharedValue(1);
@@ -198,6 +201,8 @@ const DietPreferenceScreen = () => {
   const [allergies, setAllergies] = useState([]);
   const [cuisine, setCuisine] = useState([]);
 
+  const isFormValid = dietType && allergies.length > 0 && cuisine.length > 0;
+
   const allergyOptions = [
     { label: 'Nuts', value: 'Nuts' },
     { label: 'Dairy', value: 'Dairy' },
@@ -232,6 +237,7 @@ const DietPreferenceScreen = () => {
   };
 
   const handleSubmit = async () => {
+    if (!isFormValid) return;
     await updateDoc(doc(db, 'users', userId), {
       dietPreference: { dietType, allergies, cuisines: cuisine },
     });
@@ -402,6 +408,7 @@ const DietPreferenceScreen = () => {
         <FullWidthButton
           title="Save & Continue"
           onPress={handleSubmit}
+          disabled={!isFormValid}
         />
       </YStack>
     </YStack>

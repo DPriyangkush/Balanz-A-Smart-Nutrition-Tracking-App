@@ -84,7 +84,7 @@ const MultiSelectDropdown = ({ values = [], onValuesChange, items, placeholder =
   }, [values, items]);
 
   const animatedStyle = useAnimatedStyle(() => {
-    const maxHeight = Math.min(items?.length * 52 || 0, 200);
+    const maxHeight = Math.min(items?.length * 55 || 0, 600);
     return {
       height: interpolate(animatedHeight.value, [0, 1], [0, maxHeight]),
       opacity: opacity.value,
@@ -184,12 +184,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderColor: '#1e1e1e',
     borderWidth: 1,
-    borderRadius: 18,
+    borderRadius: 22,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginRight: 10
+    marginRight: 8
   },
   contentContainer: {
     flex: 1,
@@ -206,6 +206,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'nowrap',
+    
   },
   tag: {
     flexDirection: 'row',
