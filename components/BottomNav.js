@@ -1,151 +1,267 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
-import { BlurView } from "expo-blur";
-import { AntDesign } from "@expo/vector-icons";
+import React, { useState, useRef, useEffect } from 'react';
+import { View, TouchableOpacity, StyleSheet, Dimensions, Image } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
-  interpolate,
-} from "react-native-reanimated";
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 
-const { width } = Dimensions.get("window");
+const { width: screenWidth } = Dimensions.get('window');
+const maxWidth = Math.min(screenWidth - 32, 500);
 
-const tabs = [
-  { name: "Home", icon: "home" },
-  { name: "Meal", icon: "rest" },
-  { name: "AI", icon: "API" },
-  { name: "Progress", icon: "linechart" },
-  { name: "Profile", icon: "user" },
-];
+// Import your local images (adjust paths as needed)
+const HomeIcon = require('../assets/Home.png');
+const MealIcon = require('../assets/Meal.png');
+const AIIcon = require('../assets/AI.png');
+const ProgressIcon = require('../assets/Progress.png');
+const ProfileIcon = require('../assets/User.png'); // Note: Same as MealIcon?
 
-export default function BottomNav() {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const tabWidth = width / tabs.length;
-  const pillWidth = tabWidth - 20;
+const BottomNav = () => {
+  const [activeTab, setActiveTab] = useState(0);
+  const containerRef = useRef(null);
+  const tabRefs = useRef([]);
+  
+  const pillLeft = useSharedValue(0);
+  const pillWidth = useSharedValue(80);
+  const labelScale = useSharedValue(0);
 
-  // Shared value for pill animation
-  const progress = useSharedValue(activeIndex);
+  const navItems = [
+    { name: 'Home', url: '#', icon: HomeIcon },
+    { name: 'Meal', url: '#', icon: MealIcon },
+    { name: 'AI', url: '#', icon: AIIcon },
+    { name: 'Progress', url: '#', icon: ProgressIcon },
+    { name: 'Profile', url: '#', icon: ProfileIcon }
+  ];
 
-  const pillStyle = useAnimatedStyle(() => {
-    // More precise calculation for pill centering
-    const translateX = interpolate(
-      progress.value,
-      tabs.map((_, i) => i), // [0, 1, 2, 3, 4]
-      tabs.map((_, i) => i * tabWidth + (tabWidth - pillWidth) / 2) // Center each pill
-    );
+  const updatePillPosition = (index, stretch = false) => {
+    if (tabRefs.current[index] && containerRef.current) {
+      tabRefs.current[index].measureLayout(
+        containerRef.current,
+        (left, top, width, height) => {
+          const pillW = stretch ? 120 : 90;
+          const newLeft = left + (width - pillW) / 2;
+          
+          pillLeft.value = newLeft;
+          pillWidth.value = pillW;
+        },
+        () => console.log('measurement failed')
+      );
+    }
+  };
 
-    // Distance from nearest integer (used for stretch)
-    const fractionalPart = Math.abs(progress.value - Math.round(progress.value));
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      updatePillPosition(activeTab);
+    }, 50);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
-    // Width stretches when moving between tabs
-    const animatedWidth = interpolate(
-      fractionalPart,
-      [0, 0.5, 1],
-      [pillWidth, pillWidth + 30, pillWidth]
-    );
+  const handleTabPress = (index) => {
+    if (index === activeTab) return;
+    
+    labelScale.value = withTiming(1, {
+      duration: 150,
+      easing: Easing.out(Easing.ease),
+    });
+    
+    updatePillPosition(activeTab, true);
+    
+    setTimeout(() => {
+      updatePillPosition(index, true);
+      setActiveTab(index);
+      
+      labelScale.value = withTiming(1.15, {
+        duration: 150,
+        easing: Easing.out(Easing.ease),
+      });
+      
+      setTimeout(() => {
+        updatePillPosition(index, false);
+      }, 150);
+    }, 100);
+  };
 
-    // Slight vertical squish
-    const scaleY = interpolate(
-      fractionalPart,
-      [0, 0.5, 1],
-      [1, 0.9, 1]
-    );
-
+  const animatedPillStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ translateX }, { scaleY }],
-      width: animatedWidth,
+      left: withTiming(pillLeft.value, {
+        duration: 300,
+        easing: Easing.out(Easing.ease),
+      }),
+      width: withTiming(pillWidth.value, {
+        duration: 300,
+        easing: Easing.out(Easing.ease),
+      }),
     };
   });
 
-  const handlePress = (index) => {
-    setActiveIndex(index);
-    progress.value = withSpring(index, {
-      damping: 15,
-      stiffness: 150,
-    });
-  };
+  const animatedLabelStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: labelScale.value }],
+    };
+  });
 
   return (
     <View style={styles.container}>
-      <BlurView intensity={70} tint="light" style={styles.blurContainer}>
-        
-        {/* Gooey Pill */}
-        <Animated.View
-          style={[
-            styles.pill,
-            pillStyle,
-          ]}
-        />
-
-        {tabs.map((tab, index) => {
-          const isActive = activeIndex === index;
-          return (
-            <TouchableOpacity
-              key={tab.name}
-              style={styles.tab}
-              activeOpacity={0.7}
-              onPress={() => handlePress(index)}
+      <BlurView intensity={90} tint="light" style={styles.blurContainer}>
+        <View 
+          ref={containerRef}
+          style={styles.navContainer}
+          onLayout={() => updatePillPosition(activeTab)}
+        >
+          <Animated.View style={[styles.pill, animatedPillStyle]}>
+            <LinearGradient
+              colors={['#e0e0e0ff','#515151ff', '#111111ff']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={styles.gradient}
             >
-              <AntDesign
-                name={tab.icon}
-                size={24}
-                color={isActive ? "#fff" : "#555"}
+              <View style={styles.tubelightGlow} />
+            </LinearGradient>
+          </Animated.View>
+          
+          {navItems.map((item, index) => (
+            <TouchableOpacity
+              key={item.name}
+              ref={(el) => (tabRefs.current[index] = el)}
+              onPress={() => handleTabPress(index)}
+              style={styles.tabButton}
+              activeOpacity={0.7}
+            >
+              <Image 
+                source={item.icon} 
+                style={[
+                  styles.icon,
+                  activeTab === index && styles.activeIcon
+                ]}
+                resizeMode="contain"
               />
-              <Text style={[styles.label, isActive && styles.activeLabel]}>
-                {tab.name}
-              </Text>
             </TouchableOpacity>
-          );
-        })}
+          ))}
+        </View>
       </BlurView>
+
+      <View style={styles.labelsContainer}>
+        {navItems.map((item, index) => (
+          <View key={`label-${index}`} style={styles.labelWrapper}>
+            <Animated.Text style={[
+              styles.labelText,
+              activeTab === index && styles.activeLabelText,
+              activeTab === index && animatedLabelStyle
+            ]}>
+              {item.name}
+            </Animated.Text>
+          </View>
+        ))}
+      </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
-    position: "absolute",
-    bottom: 0,
-    width: "100%",
-    alignItems: "center",
+    position: 'absolute',
+    bottom: 24,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 50,
+    paddingHorizontal: 12,
   },
   blurContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    overflow: "hidden",
-    width: width,
-    paddingVertical: 0,
-    backgroundColor: "red",
-    height: 80,
+    width: '100%',
+    maxWidth: 500,
+    borderRadius: 30,
+    overflow: 'hidden',
+    height: 60,
   },
-  tab: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    height: 80,
-    zIndex: 1,
-  },
-  label: {
-    fontSize: 12,
-    marginTop: 2,
-    color: "#555",
-    textAlign: "center",
-  },
-  activeLabel: {
-    color: "#fff",
-    fontWeight: "600",
+  navContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(156, 163, 175, 0.2)',
+    borderRadius: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 8,
+    overflow: 'hidden',
+    position: 'relative',
   },
   pill: {
-    position: "absolute",
-    height: 50,
-    backgroundColor: "#3C3F41",
-    borderRadius: 25,
-    top: 15, // (80 - 50) / 2 = 15 for perfect centering
-    zIndex: 0,
+    position: 'absolute',
+    height: 54,
+    borderRadius: 30,
+    top: '50%',
+    transform: [{ translateY: -9 }],
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    elevation: 4,
+  },
+  gradient: {
+    flex: 1,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tubelightGlow: {
+    position: 'absolute',
+    top: -2,
+    width: 28,
+    height: 2,
+    backgroundColor: '#000000ff',
+    borderRadius: 1,
+    shadowColor: '#60a5fa',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  tabButton: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+    paddingHorizontal: 2,
+  },
+  icon: {
+    width: 24,
+    height: 24,
+    tintColor: '#1e1e1e',
+  },
+  activeIcon: {
+    tintColor: '#ffffff',
+    shadowColor: 'rgba(0, 0, 0, 0.3)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+  },
+  labelsContainer: {
+    width: '100%',
+    maxWidth: 500,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: 2,
+    paddingHorizontal: 8,
+  },
+  labelWrapper: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  labelText: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#1e1e1e',
+    textAlign: 'center',
+    display: "none"
+  },
+  activeLabelText: {
+    fontWeight: '600',
+    color: '#1b4a0fff',
   },
 });
+
+export default BottomNav;
