@@ -238,10 +238,22 @@ const DietPreferenceScreen = () => {
 
   const handleSubmit = async () => {
     if (!isFormValid) return;
-    await updateDoc(doc(db, 'users', userId), {
-      dietPreference: { dietType, allergies, cuisines: cuisine },
-    });
-    navigation.reset({ index: 0, routes: [{ name: 'DashboardScreen' }] });
+    
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+        dietPreference: { dietType, allergies, cuisines: cuisine },
+      });
+      
+      // Reset navigation to the main app tabs
+      navigation.navigate('App', {
+  screen: 'Dashboard', // Name of your tab screen
+});
+      
+    } catch (error) {
+      console.error('Error saving diet preferences:', error);
+      // Optionally show error to user
+      alert('Failed to save preferences. Please try again.');
+    }
   };
 
   const containerPadding = isTablet ? getResponsiveSize(32) : getResponsiveSize(16);

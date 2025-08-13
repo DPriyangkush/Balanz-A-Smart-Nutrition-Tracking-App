@@ -8,32 +8,35 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
+import { useNavigation } from '@react-navigation/native';
 
-const { width: screenWidth } = Dimensions.get('window');
+// Calculate dimensions based on screen size
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const maxWidth = Math.min(screenWidth - 32, 500);
+const isSmallScreen = screenWidth < 375; // iPhone SE size threshold
 
 // Import your local images (adjust paths as needed)
 const HomeIcon = require('../assets/Home.png');
 const MealIcon = require('../assets/Meal.png');
 const AIIcon = require('../assets/AI.png');
 const ProgressIcon = require('../assets/Progress.png');
-const ProfileIcon = require('../assets/User.png'); // Note: Same as MealIcon?
+const ProfileIcon = require('../assets/User.png');
 
-const BottomNav = () => {
+const BottomNav = ({ state, descriptors, navigation }) => {
   const [activeTab, setActiveTab] = useState(0);
   const containerRef = useRef(null);
   const tabRefs = useRef([]);
   
   const pillLeft = useSharedValue(0);
-  const pillWidth = useSharedValue(80);
+  const pillWidth = useSharedValue(isSmallScreen ? 70 : 80);
   const labelScale = useSharedValue(0);
 
   const navItems = [
-    { name: 'Home', url: '#', icon: HomeIcon },
-    { name: 'Meal', url: '#', icon: MealIcon },
-    { name: 'AI', url: '#', icon: AIIcon },
-    { name: 'Progress', url: '#', icon: ProgressIcon },
-    { name: 'Profile', url: '#', icon: ProfileIcon }
+    { name: 'Home', screenName: 'Dashboard', icon: HomeIcon },
+    { name: 'Meal', screenName: 'Meal', icon: MealIcon },
+    { name: 'AI', screenName: 'AI', icon: AIIcon },
+    { name: 'Progress', screenName: 'Progress', icon: ProgressIcon },
+    { name: 'Profile', screenName: 'Profile', icon: ProfileIcon }
   ];
 
   const updatePillPosition = (index, stretch = false) => {
@@ -41,21 +44,49 @@ const BottomNav = () => {
       tabRefs.current[index].measureLayout(
         containerRef.current,
         (left, top, width, height) => {
-          const pillW = stretch ? 120 : 90;
+          const pillW = stretch ? (isSmallScreen ? 120 : 140) : (isSmallScreen ? 70 : 90);
           const newLeft = left + (width - pillW) / 2;
           
-          pillLeft.value = newLeft;
-          pillWidth.value = pillW;
+          pillLeft.value = withTiming(newLeft, {
+            duration: 300,
+            easing: Easing.out(Easing.ease),
+          });
+          pillWidth.value = withTiming(pillW, {
+            duration: 300,
+            easing: Easing.out(Easing.ease),
+          });
         },
         () => console.log('measurement failed')
       );
     }
   };
 
+  // Update activeTab and animate pill when navigation state changes
+  useEffect(() => {
+    if (state && state.index !== activeTab) {
+      setActiveTab(state.index);
+      
+      // Animate pill to new position
+      setTimeout(() => {
+        updatePillPosition(state.index, true);
+        
+        labelScale.value = withTiming(1.15, {
+          duration: 150,
+          easing: Easing.out(Easing.ease),
+        });
+        
+        setTimeout(() => {
+          updatePillPosition(state.index, false);
+        }, 150);
+      }, 50);
+    }
+  }, [state?.index]);
+
+  // Initial pill position setup
   useEffect(() => {
     const timer = setTimeout(() => {
       updatePillPosition(activeTab);
-    }, 50);
+    }, 100);
     
     return () => clearTimeout(timer);
   }, []);
@@ -63,38 +94,19 @@ const BottomNav = () => {
   const handleTabPress = (index) => {
     if (index === activeTab) return;
     
-    labelScale.value = withTiming(1, {
-      duration: 150,
-      easing: Easing.out(Easing.ease),
-    });
-    
-    updatePillPosition(activeTab, true);
-    
-    setTimeout(() => {
-      updatePillPosition(index, true);
-      setActiveTab(index);
-      
-      labelScale.value = withTiming(1.15, {
-        duration: 150,
-        easing: Easing.out(Easing.ease),
-      });
-      
-      setTimeout(() => {
-        updatePillPosition(index, false);
-      }, 150);
-    }, 100);
+    // Use the tab navigation instead of general navigation
+    const route = state.routes[index];
+    const isFocused = state.index === index;
+
+    if (!isFocused) {
+      navigation.navigate(route.name);
+    }
   };
 
   const animatedPillStyle = useAnimatedStyle(() => {
     return {
-      left: withTiming(pillLeft.value, {
-        duration: 300,
-        easing: Easing.out(Easing.ease),
-      }),
-      width: withTiming(pillWidth.value, {
-        duration: 300,
-        easing: Easing.out(Easing.ease),
-      }),
+      left: pillLeft.value,
+      width: pillWidth.value,
     };
   });
 
@@ -164,19 +176,22 @@ const BottomNav = () => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 24,
+    bottom: isSmallScreen ? 16 : 24,
     left: 0,
     right: 0,
     alignItems: 'center',
     zIndex: 50,
-    paddingHorizontal: 12,
+    paddingHorizontal: isSmallScreen ? 8 : 12,
   },
   blurContainer: {
     width: '100%',
     maxWidth: 500,
     borderRadius: 30,
     overflow: 'hidden',
-    height: 60,
+    height: isSmallScreen ? 56 : 60,
+    backgroundColor: "green",
+    alignItems: 'center',
+    
   },
   navContainer: {
     width: '100%',
@@ -185,17 +200,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(156, 163, 175, 0.2)',
     borderRadius: 20,
-    paddingVertical: 18,
-    paddingHorizontal: 8,
+    paddingVertical: isSmallScreen ? 14 : 18,
+    paddingHorizontal: isSmallScreen ? 6 : 8,
     overflow: 'hidden',
     position: 'relative',
   },
   pill: {
     position: 'absolute',
-    height: 54,
+    height: isSmallScreen ? 50 : 54,
     borderRadius: 30,
     top: '50%',
-    transform: [{ translateY: -9 }],
+    transform: [{ translateY: isSmallScreen ? -12 : -10 }],
     shadowColor: '#3b82f6',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
@@ -210,7 +225,7 @@ const styles = StyleSheet.create({
   },
   tubelightGlow: {
     position: 'absolute',
-    top: -2,
+    top: -1,
     width: 28,
     height: 2,
     backgroundColor: '#000000ff',
@@ -229,8 +244,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   icon: {
-    width: 24,
-    height: 24,
+    width: isSmallScreen ? 22 : 24,
+    height: isSmallScreen ? 22 : 24,
     tintColor: '#1e1e1e',
   },
   activeIcon: {
@@ -245,14 +260,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingTop: 2,
-    paddingHorizontal: 8,
+    paddingHorizontal: isSmallScreen ? 6 : 8,
   },
   labelWrapper: {
     flex: 1,
     alignItems: 'center',
   },
   labelText: {
-    fontSize: 14,
+    fontSize: isSmallScreen ? 12 : 14,
     fontWeight: '400',
     color: '#1e1e1e',
     textAlign: 'center',
