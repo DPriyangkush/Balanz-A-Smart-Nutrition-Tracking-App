@@ -126,7 +126,7 @@ const BottomNav = ({ state, descriptors, navigation }) => {
         >
           <Animated.View style={[styles.pill, animatedPillStyle]}>
             <LinearGradient
-              colors={['#e0e0e0ff','#515151ff', '#111111ff']}
+              colors={['#b8e3bbff', '#61c764ff', '#49a84dff']}
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
               style={styles.gradient}
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     overflow: 'hidden',
     height: isSmallScreen ? 56 : 60,
-    backgroundColor: "green",
+    backgroundColor: "#D7F8E4",
     alignItems: 'center',
     
   },
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     tintColor: '#1e1e1e',
   },
   activeIcon: {
-    tintColor: '#ffffff',
+    tintColor: '#1e1e1e',
     shadowColor: 'rgba(0, 0, 0, 0.3)',
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,

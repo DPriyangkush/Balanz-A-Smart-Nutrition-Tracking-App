@@ -7,22 +7,22 @@ import { LinearGradient } from "expo-linear-gradient";
 const { width } = Dimensions.get("window");
 const CARD_HEIGHT = 450;
 
-export default function App() {
+export default function ProfileCard({ style }) {
   const profileImage =
     "https://images.unsplash.com/photo-1502685104226-ee32379fefbe";
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       {/* Background Image */}
       <Image source={{ uri: profileImage }} style={styles.image} />
 
-      {/* Blurred bottom section with smooth fade starting halfway */}
+      {/* Blurred bottom section */}
       <MaskedView
         style={StyleSheet.absoluteFill}
         maskElement={
           <LinearGradient
             colors={["transparent", "black"]}
-            locations={[0.5, 0.8, 1]} // starts halfway
+            locations={[0.5, 0.8, 1]}
             style={StyleSheet.absoluteFill}
           />
         }
@@ -54,7 +54,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: "hidden",
     alignSelf: "center",
-    marginTop: 50,
   },
   image: {
     width: "100%",
@@ -69,32 +68,34 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
-    zIndex: 1000,
+    zIndex: 10000,
   },
   name: {
-    color: "#fff",
-    fontSize: 20,
+    color: "#1e1e1e",
+    fontSize: 24,
     fontWeight: "bold",
   },
   subtitle: {
     color: "#ddd",
-    fontSize: 14,
+    fontSize: 16,
     marginBottom: 4,
   },
   description: {
     color: "#ccc",
-    fontSize: 13,
+    fontSize: 14,
     lineHeight: 18,
-    maxWidth: width * 0.55, // keep text from colliding with button
+    maxWidth: width * 0.55,
   },
   followBtn: {
-    backgroundColor: "#fff",
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-    borderRadius: 20,
+    backgroundColor: "#1e1e1e",
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 30,
+    borderWidth: 0.5,
+    borderColor: "#fff",
   },
   followText: {
     fontWeight: "bold",
-    color: "#000",
+    color: "#fff",
   },
 });
