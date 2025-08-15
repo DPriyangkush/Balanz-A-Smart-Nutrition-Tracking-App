@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   trigger: {
-    height: 64,
+    height: 52,
     backgroundColor: '#fff',
     borderColor: '#1e1e1e',
     borderWidth: 1,
@@ -143,9 +143,9 @@ const styles = StyleSheet.create({
   },
   dropdown: {
     position: 'absolute',
-    top: 70, // Just below the trigger (56px height + 2px gap)
+    top: 60, // Just below the trigger (56px height + 2px gap)
     left: 0,
-    right: 0,
+    right: 10,
     backgroundColor: '#fff',
     borderRadius: 12,
     overflow: 'hidden',
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     borderWidth: 1,
     borderColor: '#e0e0e0',
-    zIndex: 1001,
+    zIndex: 10001,
   },
   option: {
     paddingVertical: 16,

@@ -94,7 +94,7 @@ const GoalPreferenceScreen = () => {
     <YStack f={1} p="$4" marginTop={'$10'}>
       <ProgressBar step={2} />
 
-      <Text fontSize={20} fontWeight="700" mt="$4" textAlign="center">
+      <Text fontSize={20} color="#fff" fontWeight="700" mt="$4" textAlign="center">
         What's your primary goal?
       </Text>
       <Text fontSize={14} color="$gray10" mt={'$1'} mb={'$4'} textAlign="center">

@@ -239,7 +239,7 @@ export default AuthScreen;
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    padding: 10,
     paddingTop: 50,
     backgroundColor: '#fff',
     flexGrow: 1,

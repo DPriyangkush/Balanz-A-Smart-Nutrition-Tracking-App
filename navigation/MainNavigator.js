@@ -41,15 +41,16 @@ const AppTabs = ({ navigation, route }) => {
     Progress: "Progress",
     Profile: "Profile",
   };
-
+  
+   
   return (
     <View style={styles.appContainer}>
       {/* Frosted glass header */}
-      <FrostedHeader
+      {/**<FrostedHeader
         title={screenTitles[routeName]}
         navigation={navigation}
         showBack={false}
-      />
+      />*/}
 
       {/* Tabs */}
       <View style={styles.tabsWrapper}>
@@ -69,6 +70,7 @@ const AppTabs = ({ navigation, route }) => {
       </View>
     </View>
   );
+  
 };
 
 const MainNavigator = () => {
@@ -154,7 +156,7 @@ const styles = StyleSheet.create({
   },
   tabsWrapper: {
     flex: 1,
-    marginTop: 60, // height of the frosted header
+    marginTop: 0, // height of the frosted header
   },
 });
 

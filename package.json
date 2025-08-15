@@ -48,7 +48,8 @@
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
     "tamagui": "^1.125.8",
-    "@react-native-masked-view/masked-view": "0.3.2"
+    "@react-native-masked-view/masked-view": "0.3.2",
+    "react-native-svg": "15.11.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

@@ -24,7 +24,7 @@ const PasswordInput = ({ value, onChangeText, placeholder, ...props }) => {
           color="black"
           backgroundColor="transparent"
           borderWidth={0}
-          size="$6"
+          size="$5"
           paddingLeft={0}  
           {...props}
         />

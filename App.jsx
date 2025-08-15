@@ -20,12 +20,35 @@ export default function App() {
 
   const [appReady, setAppReady] = useState(false);
   const colorScheme = useColorScheme();
-  const isDarkMode = colorScheme === 'dark'; // ✅ Define this
-  const theme = useMemo(() => (isDarkMode ? DarkTheme : DefaultTheme), [isDarkMode]);
+  const isDarkMode = colorScheme === 'dark';
+
+  // ✅ Custom dark theme that isn't pure black
+  const customDarkTheme = useMemo(
+    () => ({
+      ...DarkTheme,
+      colors: {
+        ...DarkTheme.colors,
+        background: '#121212', // dark gray instead of pure black
+      },
+    }),
+    []
+  );
+
+  const customLightTheme = useMemo(
+    () => ({
+      ...DefaultTheme,
+      colors: {
+        ...DefaultTheme.colors,
+        background: '#FFFFFF', // ensure white background
+      },
+    }),
+    []
+  );
+
+  const theme = isDarkMode ? customDarkTheme : customLightTheme;
 
   useEffect(() => {
     if (fontsLoaded) {
-      
       setAppReady(true);
     }
   }, [fontsLoaded]);
@@ -39,7 +62,13 @@ export default function App() {
   if (!appReady) return null;
 
   return (
-    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: theme.colors.background, // ✅ Prevent system black background
+      }}
+      onLayout={onLayoutRootView}
+    >
       <StatusBar
         translucent
         backgroundColor="transparent"

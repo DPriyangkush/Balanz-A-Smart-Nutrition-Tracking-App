@@ -256,7 +256,7 @@ const DietPreferenceScreen = () => {
     }
   };
 
-  const containerPadding = isTablet ? getResponsiveSize(32) : getResponsiveSize(16);
+  const containerPadding = isTablet ? getResponsiveSize(32) : getResponsiveSize(10);
   const marginHorizontal = isTablet ? getResponsiveSize(20) : getResponsiveSize(10);
   const gapSize = isTablet ? 15 : 10;
   const topMargin = isTablet ? getResponsiveSize(60) : getResponsiveSize(50);
@@ -278,7 +278,7 @@ const DietPreferenceScreen = () => {
           fontWeight="700"
           mt="$4"
           textAlign="center"
-          style={{ marginBottom: getResponsiveSize(20) }}
+          style={{ marginBottom: getResponsiveSize(20), color: "#fff" }}
         >
           Your Food Preferences
         </Text>

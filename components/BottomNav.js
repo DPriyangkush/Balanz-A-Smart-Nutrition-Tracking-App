@@ -118,7 +118,7 @@ const BottomNav = ({ state, descriptors, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <BlurView intensity={90} tint="light" style={styles.blurContainer}>
+      <BlurView intensity={0} tint="light" style={styles.blurContainer}>
         <View 
           ref={containerRef}
           style={styles.navContainer}
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     overflow: 'hidden',
     height: isSmallScreen ? 56 : 60,
-    backgroundColor: "#D7F8E4",
+    backgroundColor: "#000000ff",
     alignItems: 'center',
     
   },
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     top: -1,
     width: 28,
     height: 2,
-    backgroundColor: '#000000ff',
+    backgroundColor: '#ffffffff',
     borderRadius: 1,
     shadowColor: '#60a5fa',
     shadowOffset: { width: 0, height: 0 },
@@ -246,10 +246,10 @@ const styles = StyleSheet.create({
   icon: {
     width: isSmallScreen ? 22 : 24,
     height: isSmallScreen ? 22 : 24,
-    tintColor: '#1e1e1e',
+    tintColor: '#ffffffff',
   },
   activeIcon: {
-    tintColor: '#1e1e1e',
+    tintColor: '#ffffffff',
     shadowColor: 'rgba(0, 0, 0, 0.3)',
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
