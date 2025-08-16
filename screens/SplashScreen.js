@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
+
 const SplashScreen = () => {
   const navigation = useNavigation();
   const logoAnim = useRef(new Animated.Value(0)).current; // opacity + scale
@@ -9,6 +10,7 @@ const SplashScreen = () => {
   const descAnim = useRef(new Animated.Value(0)).current; // opacity + slight slide
 
   useEffect(() => {
+
     // Sequential Animation
     Animated.sequence([
       Animated.timing(logoAnim, {
@@ -29,15 +31,15 @@ const SplashScreen = () => {
     ]).start();
 
 
-     const timer = setTimeout(() => {
+    const timer = setTimeout(() => {
       navigation.navigate("Onboarding");
     }, 6000);
 
     return () => clearTimeout(timer);
-    
+
   }, []);
 
-  
+
 
   return (
     <View style={styles.container}>

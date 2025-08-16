@@ -18,6 +18,7 @@ import FullWidthInput from 'components/FullWidthInput';
 import HalfWidthInput from 'components/HalfWidthInput';
 import HalfWidthSelect from 'components/HalfWidthSelect';
 import FullWidthButton from 'components/FullWidthButton';
+import useAuthStore from '../stores/authStore'; // Add this import
 
 // Reanimated
 import Animated, {
@@ -31,7 +32,10 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const PersonalInfoScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { userId } = route.params;
+  
+  // Safely extract userId with fallback to auth store
+  const { user } = useAuthStore();
+  const userId = route.params?.userId || user?.uid;
 
   const [age, setAge] = useState('');
   const [weight, setWeight] = useState('');
@@ -40,6 +44,15 @@ const PersonalInfoScreen = () => {
   const [heightUnit, setHeightUnit] = useState('cm');
   const [gender, setGender] = useState('');
   const [activity, setActivity] = useState('');
+
+  // Show loading if no userId is available
+  if (!userId) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   const isComplete = age && weight && height && gender && activity;
 
@@ -65,18 +78,25 @@ const PersonalInfoScreen = () => {
   }));
 
   const handleNext = async () => {
-    await updateDoc(doc(db, 'users', userId), {
-      personalInfo: {
-        age,
-        weight,
-        weightUnit,
-        height,
-        heightUnit,
-        gender,
-        activity,
-      },
-    });
-    navigation.navigate('GoalPreferenceScreen', { userId });
+    if (!userId) return;
+    
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+        personalInfo: {
+          age,
+          weight,
+          weightUnit,
+          height,
+          heightUnit,
+          gender,
+          activity,
+        },
+      });
+      navigation.navigate('GoalPreferenceScreen', { userId });
+    } catch (error) {
+      console.error('Error saving personal info:', error);
+      alert('Failed to save personal information. Please try again.');
+    }
   };
 
   const formContent = (

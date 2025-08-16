@@ -18,8 +18,7 @@ import Animated, {
 import {OnboardingData} from '../data/data';
 import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type ButtonProps = {
   dataLength: number;
@@ -29,7 +28,7 @@ type ButtonProps = {
   onFinish?: () => void;
 };
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const CustomButton: FC<ButtonProps> = ({
   dataLength,
@@ -38,90 +37,97 @@ const CustomButton: FC<ButtonProps> = ({
   x,
   onFinish,
 }) => {
-
   const {width: SCREEN_WIDTH} = useWindowDimensions();
   const buttonScale = useSharedValue(1);
 
-   const animatedStyle = useAnimatedStyle(() => {
+  const animatedStyle = useAnimatedStyle(() => {
+    const isLastIndex = flatListIndex.value === dataLength - 1;
+    return {
+      width: isLastIndex ? withSpring(140) : withSpring(60),
+      height: 60,
+      transform: [{scale: buttonScale.value}],
+      backgroundColor: interpolateColor(
+        x.value,
+        [0, SCREEN_WIDTH, 2 * SCREEN_WIDTH],
+        ["#fff", "#1e1e1", "#fff"],
+      )
+    };
+  });
 
-    const isLastIndex = flatListIndex.value === dataLength - 1
-        return{
-          width: isLastIndex ? withSpring(140) : withSpring(60),
-          height: 60,
-          transform: [{scale: buttonScale.value}],
-          backgroundColor: interpolateColor(
-            x.value,
-            [0, SCREEN_WIDTH, 2 * SCREEN_WIDTH],
-            ["#fff", "#1e1e1", "#fff"],
-          )
-        }
-    });
+  const textStyle = useAnimatedStyle(() => {
+    const isLastIndex = flatListIndex.value === dataLength - 1;
+    return {
+      opacity: isLastIndex ? withTiming(1) : withTiming(0),
+      transform: [{translateX: isLastIndex ? withTiming(0) : withTiming(-100)}],
+    };
+  });
 
-    const textStyle = useAnimatedStyle(() => {
+  const iconStyle = useAnimatedStyle(() => {
+    const isLastIndex = flatListIndex.value === dataLength - 1;
+    return {
+      width: 30,
+      height: 30,
+      opacity: isLastIndex ? withTiming(0) : withTiming(1),
+      transform: [{translateX: isLastIndex ? withTiming(100) : withTiming(0)}],
+    };
+  });
 
-    const isLastIndex = flatListIndex.value === dataLength - 1
-        return{
-          opacity: isLastIndex ? withTiming(1) : withTiming(0),
-          transform: [{translateX: isLastIndex ? withTiming(0) : withTiming(-100)}],
-          
-        }
-    });
+  const navigation = useNavigation<any>();
 
-    const iconStyle = useAnimatedStyle(() => {
-
-    const isLastIndex = flatListIndex.value === dataLength - 1
-        return{
-          width: 30,
-          height: 30,
-          opacity: isLastIndex ? withTiming(0) : withTiming(1),
-          transform: [{translateX: isLastIndex ? withTiming(100) : withTiming(0)}],
-        }
-    });
-
-    const navigation = useNavigation<any>();
-
-    const navigateToLogin = () => {
-      navigation.navigate("AuthScreen");
+  const markOnboardingComplete = async (): Promise<void> => {
+    try {
+      await AsyncStorage.setItem('hasSeenOnboarding', 'true');
+      console.log('Onboarding marked as complete');
+    } catch (error) {
+      console.log('Error saving onboarding status:', error);
     }
+  };
 
-    
-    const handlePress = () => {
-      const isLastIndex = flatListIndex.value === dataLength - 1
+  const navigateToLogin = async (): Promise<void> => {
+    await markOnboardingComplete();
+    navigation.navigate("AuthScreen");
+  };
 
-      if (!isLastIndex) {
-        flatListRef.current?.scrollToIndex({
-          index: flatListIndex.value + 1,
-          animated: true,
-        });
-      }else{
-        if(onFinish){
-          runOnJS(onFinish)();
-        }else{
-          runOnJS(navigateToLogin)();
-        }
+  const handlePress = () => {
+    const isLastIndex = flatListIndex.value === dataLength - 1;
+
+    if (!isLastIndex) {
+      flatListRef.current?.scrollToIndex({
+        index: flatListIndex.value + 1,
+        animated: true,
+      });
+    } else {
+      if (onFinish) {
+        // If custom onFinish is provided, still mark onboarding as complete
+        runOnJS(markOnboardingComplete)();
+        runOnJS(onFinish)();
+      } else {
+        runOnJS(navigateToLogin)();
       }
     }
+  };
 
-    const onPress = () => {
-      buttonScale.value = withSpring(0.9, {}, () => {
-        buttonScale.value = withSpring(1),
-        runOnJS(handlePress)()
-      })
-    }
+  const onPress = () => {
+    buttonScale.value = withSpring(0.9, {}, () => {
+      buttonScale.value = withSpring(1);
+      runOnJS(handlePress)();
+    });
+  };
 
   return (
     <View style={styles.container}>
       <AnimatedPressable onPress={onPress}>
         <Animated.View style={[styles.button, animatedStyle]}>
           <Animated.Text style={[styles.text, textStyle]}>Get Started</Animated.Text>
-          <Animated.Image source={require("../assets/images/ArrowIcon.png")} style={[styles.arrow, iconStyle]}/>
+          <Animated.Image 
+            source={require("../assets/images/ArrowIcon.png")} 
+            style={[styles.arrow, iconStyle]}
+          />
         </Animated.View>
       </AnimatedPressable>
     </View>
-  )
-}
-
-  
+  );
+};
 
 export default CustomButton;
 

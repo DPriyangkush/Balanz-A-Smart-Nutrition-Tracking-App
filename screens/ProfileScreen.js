@@ -16,7 +16,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { auth, db } from "../firebaseConfig";
 import { doc, onSnapshot } from "firebase/firestore";
 import ProfileTabs from "../components/ProfileTabs";
-
+import LogoutButton from "../components/LogoutButton";
+import useAuthStore from "../stores/authStore"; // Add this import
 
 const { width } = Dimensions.get("window");
 
@@ -56,7 +57,19 @@ export default function ProfileScreen() {
   const [userData, setUserData] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
 
-  
+  // Get signOut function from auth store
+  const { signOut } = useAuthStore();
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      console.log("User logged out successfully");
+      // No need for manual navigation - the auth state listener will handle it
+    } catch (error) {
+      console.error("Logout error:", error);
+      Alert.alert("Logout Error", "An error occurred during logout. Please try again.");
+    }
+  };
 
   useEffect(() => {
     const currentUser = auth.currentUser;
@@ -126,7 +139,7 @@ export default function ProfileScreen() {
     <View style={styles.container}>
       {/* Orange-to-dark background */}
       <LinearGradient
-        colors={["#ff6a00ff", "#f29350ff",  "#1a1a1a"]}
+        colors={["#ff6a00ff", "#f29350ff", "#1a1a1a"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 0.5 }}
         style={StyleSheet.absoluteFill}
@@ -181,8 +194,8 @@ export default function ProfileScreen() {
       {/* Tabs */}
       <ProfileTabs onTabChange={setActiveTab} />
 
-      {/* Workout List */}
-      
+      {/* Logout Button */}
+      <LogoutButton onLogout={handleLogout} />
     </View>
   );
 }

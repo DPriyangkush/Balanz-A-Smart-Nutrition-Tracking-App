@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   Animated,
+  Alert,
 } from 'react-native';
 import { AntDesign, Entypo, FontAwesome } from '@expo/vector-icons';
 import FullWidthButton from 'components/FullWidthButton';
@@ -13,25 +14,25 @@ import FullWidthInput from 'components/FullWidthInput';
 import PasswordInput from 'components/PasswordInput';
 import { YStack } from 'tamagui';
 import { useNavigation } from '@react-navigation/native';
-import { auth, db } from '../firebaseConfig';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-
-
+import useAuthStore from '../stores/authStore';
 
 const AuthScreen = () => {
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState('login');
   const slideAnim = useRef(new Animated.Value(0)).current;
 
-  const [form, setForm] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    password: '',
-  });
-
-  const [errors, setErrors] = useState({});
+  // Zustand store
+  const {
+    form,
+    errors,
+    isLoading,
+    error,
+    updateForm,
+    clearForm,
+    clearError,
+    signUp,
+    signIn,
+  } = useAuthStore();
 
   const switchTab = (tab) => {
     setActiveTab(tab);
@@ -40,132 +41,156 @@ const AuthScreen = () => {
       duration: 250,
       useNativeDriver: false,
     }).start();
-    setErrors({});
-    setForm({ fullName: '', email: '', phone: '', password: '' });
-  };
-
-  const handleChange = (name, value) => {
-    setForm({ ...form, [name]: value });
-    setErrors({ ...errors, [name]: '' });
-  };
-
-  const validate = () => {
-    const newErrors = {};
-    if (activeTab === 'signup' && !form.fullName.trim()) newErrors.fullName = 'Full Name is required';
-    if (!form.email.includes('@')) newErrors.email = 'Valid email required';
-    if (activeTab === 'signup' && !/^\d{10}$/.test(form.phone)) newErrors.phone = 'Valid phone number required';
-    if (form.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    clearForm();
+    clearError();
   };
 
   const handleSignUp = async () => {
-    if (!validate()) return;
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
-      const user = userCredential.user;
-      await setDoc(doc(db, 'users', user.uid), {
-        fullName: form.fullName,
-        email: form.email,
-        phone: form.phone,
-      });
-      navigation.navigate('PersonalInfoScreen', { userId: user.uid });
-      console.log("Signup Successfull!");
-    } catch (error) {
-      alert(error.message);
+    const result = await signUp();
+    if (result.success) {
+      // Navigate to onboarding for new users
+      navigation.navigate('PersonalInfoScreen', { userId: result.userId });
+      console.log("Signup Successful! Starting onboarding...");
+    } else if (result.error) {
+      Alert.alert('Sign Up Failed', result.error);
     }
   };
 
   const handleLogin = async () => {
-    if (!validate()) return;
-    try {
-      await signInWithEmailAndPassword(auth, form.email, form.password);
-      alert('Login Successful!');
-    } catch (error) {
-      alert(error.message);
+    const result = await signIn();
+    if (result.success) {
+      console.log("Login Successful!", result.user.uid);
+      // Navigation will be handled by MainNavigator based on onboarding status
+    } else if (result.error) {
+      Alert.alert('Login Failed', result.error);
     }
   };
 
-  
-
-
   const renderLoginForm = () => (
     <>
-      <FullWidthInput mb="$3"
+      <FullWidthInput 
+        mb="$3"
         value={form.email}
-        onChangeText={(val) => handleChange('email', val)}
+        onChangeText={(val) => updateForm('email', val)}
         placeholder="Enter your email"
         hasError={!!errors.email}
+        editable={!isLoading}
       />
       {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
       <PasswordInput
         value={form.password}
-        onChangeText={(val) => handleChange('password', val)}
+        onChangeText={(val) => updateForm('password', val)}
         placeholder="Enter your password"
+        editable={!isLoading}
       />
       {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
-      <TouchableOpacity onPress={() => navigation.navigate("ForgotPasswordScreen")}>
+      <TouchableOpacity 
+        onPress={() => navigation.navigate("ForgotPasswordScreen")}
+        disabled={isLoading}
+      >
         <Text style={styles.forgotPassword}>Forgot Password?</Text>
       </TouchableOpacity>
-      <FullWidthButton title="Login" onPress={handleLogin} />
+      
+      <FullWidthButton 
+        title={isLoading ? "Logging in..." : "Login"} 
+        onPress={handleLogin}
+        disabled={isLoading}
+      />
     </>
   );
 
   const renderSignUpForm = () => (
     <>
-      <FullWidthInput mb="$3"
+      <FullWidthInput 
+        mb="$3"
         value={form.fullName}
-        onChangeText={(val) => handleChange('fullName', val)}
+        onChangeText={(val) => updateForm('fullName', val)}
         placeholder="Enter your name"
+        hasError={!!errors.fullName}
+        editable={!isLoading}
       />
       {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
 
-      <FullWidthInput mb="$3"
+      <FullWidthInput 
+        mb="$3"
         value={form.email}
-        onChangeText={(val) => handleChange('email', val)}
+        onChangeText={(val) => updateForm('email', val)}
         placeholder="Enter your email"
         hasError={!!errors.email}
+        editable={!isLoading}
       />
       {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
-      <FullWidthInput mb="$3"
+      <FullWidthInput 
+        mb="$3"
         value={form.phone}
-        onChangeText={(val) => handleChange('phone', val)}
+        onChangeText={(val) => updateForm('phone', val)}
         placeholder="Enter your phone"
         keyboardType="phone-pad"
         hasError={!!errors.phone}
+        editable={!isLoading}
       />
       {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
 
-      <PasswordInput 
+      <PasswordInput
         value={form.password}
-        onChangeText={(val) => handleChange('password', val)}
+        onChangeText={(val) => updateForm('password', val)}
         placeholder="Enter your password"
+        editable={!isLoading}
       />
       {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
-      <FullWidthButton title="Sign Up" onPress={handleSignUp}  />
+      <FullWidthButton 
+        title={isLoading ? "Creating Account..." : "Sign Up"} 
+        onPress={handleSignUp}
+        disabled={isLoading}
+      />
     </>
   );
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.headerRow}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => navigation.goBack()}
+          disabled={isLoading}
+        >
           <Entypo name="chevron-left" size={28} color="black" />
         </TouchableOpacity>
         <Text style={styles.welcomeText}>Welcome</Text>
       </View>
 
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.globalErrorText}>{error}</Text>
+          <TouchableOpacity onPress={clearError}>
+            <Text style={styles.dismissError}>Dismiss</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <View style={styles.tabContainer}>
         <View style={styles.tabs}>
-          <TouchableOpacity style={styles.tab} onPress={() => switchTab('login')}>
-            <Text style={[styles.tabText, activeTab === 'login' && styles.activeTab]}>Login</Text>
+          <TouchableOpacity 
+            style={styles.tab} 
+            onPress={() => switchTab('login')}
+            disabled={isLoading}
+          >
+            <Text style={[styles.tabText, activeTab === 'login' && styles.activeTab]}>
+              Login
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.tab} onPress={() => switchTab('signup')}>
-            <Text style={[styles.tabText, activeTab === 'signup' && styles.activeTab]}>Sign Up</Text>
+          <TouchableOpacity 
+            style={styles.tab} 
+            onPress={() => switchTab('signup')}
+            disabled={isLoading}
+          >
+            <Text style={[styles.tabText, activeTab === 'signup' && styles.activeTab]}>
+              Sign Up
+            </Text>
           </TouchableOpacity>
         </View>
         <Animated.View
@@ -201,6 +226,7 @@ const AuthScreen = () => {
           textColor="#000"
           icon={<AntDesign name="google" size={20} color="black" />}
           bordered
+          disabled={isLoading}
         />
       </YStack>
 
@@ -212,6 +238,7 @@ const AuthScreen = () => {
           textColor="#000"
           icon={<AntDesign name="apple1" size={20} color="black" />}
           bordered
+          disabled={isLoading}
         />
       </YStack>
 
@@ -223,6 +250,7 @@ const AuthScreen = () => {
           textColor="#000"
           icon={<FontAwesome name="mobile-phone" size={22} color="black" />}
           bordered
+          disabled={isLoading}
         />
       </YStack>
 
@@ -330,5 +358,24 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginLeft: 26,
     marginBottom: 8,
+  },
+  errorContainer: {
+    backgroundColor: '#ffebee',
+    padding: 15,
+    marginBottom: 20,
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  globalErrorText: {
+    color: '#c62828',
+    fontSize: 14,
+    flex: 1,
+  },
+  dismissError: {
+    color: '#1976d2',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

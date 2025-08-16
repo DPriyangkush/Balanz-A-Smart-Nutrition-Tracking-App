@@ -7,6 +7,7 @@ import { FontAwesome5, Feather } from '@expo/vector-icons';
 import ProgressBar from '../components/ProgressBar';
 import FullWidthButton from 'components/FullWidthButton';
 import { View, Animated, Dimensions } from 'react-native';
+import useAuthStore from '../stores/authStore'; // Add this import
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -46,13 +47,25 @@ const SelectableCard = styled(Card, {
 const GoalPreferenceScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { userId } = route.params;
+  
+  // Safely extract userId with fallback to auth store
+  const { user } = useAuthStore();
+  const userId = route.params?.userId || user?.uid;
 
   const [selectedGoal, setSelectedGoal] = useState('');
   const layoutsRef = useRef({});
   const animatedTop = useRef(new Animated.Value(0)).current;
   const animatedHeight = useRef(new Animated.Value(0)).current;
   const [indicatorVisible, setIndicatorVisible] = useState(false);
+
+  // Show loading if no userId is available
+  if (!userId) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   const handleCardLayout = (id, layout) => {
     layoutsRef.current[id] = layout;
@@ -84,10 +97,17 @@ const GoalPreferenceScreen = () => {
   };
 
   const handleContinue = async () => {
-    await updateDoc(doc(db, 'users', userId), {
-      fitnessGoal: selectedGoal,
-    });
-    navigation.navigate('DietPreferenceScreen', { userId });
+    if (!userId || !selectedGoal) return;
+    
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+        fitnessGoal: selectedGoal,
+      });
+      navigation.navigate('DietPreferenceScreen', { userId });
+    } catch (error) {
+      console.error('Error saving fitness goal:', error);
+      alert('Failed to save fitness goal. Please try again.');
+    }
   };
 
   return (

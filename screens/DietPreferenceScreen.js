@@ -14,6 +14,7 @@ import Animated, {
   interpolateColor,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import useAuthStore from '../stores/authStore'; // Add this import
 
 // Get screen dimensions for responsive design
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -32,9 +33,6 @@ const getResponsiveFontSize = (size) => {
 
 const isTablet = screenWidth >= 768;
 const isSmallScreen = screenWidth < 350;
-
-
-
 
 // Custom Animated Button Component
 const AnimatedDietButton = ({ type, isSelected, onPress }) => {
@@ -195,11 +193,23 @@ const DietPreferenceScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const theme = useTheme();
-  const { userId } = route.params;
+  
+  // Safely extract userId with fallback to auth store
+  const { user, completeOnboarding } = useAuthStore();
+  const userId = route.params?.userId || user?.uid;
 
   const [dietType, setDietType] = useState('Vegetarian');
   const [allergies, setAllergies] = useState([]);
   const [cuisine, setCuisine] = useState([]);
+
+  // Show loading if no userId is available
+  if (!userId) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   const isFormValid = dietType && allergies.length > 0 && cuisine.length > 0;
 
@@ -237,17 +247,23 @@ const DietPreferenceScreen = () => {
   };
 
   const handleSubmit = async () => {
-    if (!isFormValid) return;
+    if (!isFormValid || !userId) return;
     
     try {
+      // Save diet preferences to Firestore
       await updateDoc(doc(db, 'users', userId), {
         dietPreference: { dietType, allergies, cuisines: cuisine },
       });
       
-      // Reset navigation to the main app tabs
-      navigation.navigate('App', {
-  screen: 'Dashboard', // Name of your tab screen
-});
+      // Mark onboarding as complete
+      completeOnboarding();
+      
+      // Navigate to main app - this will trigger the navigation logic in MainNavigator
+      // to show Dashboard since onboarding is now complete
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'MainTabs' }], // Replace with your main tabs navigator name
+      });
       
     } catch (error) {
       console.error('Error saving diet preferences:', error);

@@ -35,16 +35,7 @@ const OnboardingScreen = () => {
     viewAreaCoveragePercentThreshold: 10,
   })
 
- /**  const onViewableItemsChanged = ({
-    viewableItems,
-  }: {
-    viewableItems: ViewToken[];
-  }) => {
-    if (viewableItems[0].index !== null) {
-      flatListIndex.value = viewableItems[0].index;
-    }
-  };
-  */
+
 
   const onScroll = useAnimatedScrollHandler({
     onScroll: event => {

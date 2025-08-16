@@ -44,7 +44,7 @@ const BottomNav = ({ state, descriptors, navigation }) => {
       tabRefs.current[index].measureLayout(
         containerRef.current,
         (left, top, width, height) => {
-          const pillW = stretch ? (isSmallScreen ? 120 : 140) : (isSmallScreen ? 70 : 90);
+          const pillW = stretch ? (isSmallScreen ? 120 : 140) : (isSmallScreen ? 70 : 80);
           const newLeft = left + (width - pillW) / 2;
           
           pillLeft.value = withTiming(newLeft, {
@@ -182,11 +182,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 50,
     paddingHorizontal: isSmallScreen ? 8 : 12,
+    
   },
   blurContainer: {
     width: '100%',
     maxWidth: 500,
-    borderRadius: 30,
+    borderRadius: 50,
     overflow: 'hidden',
     height: isSmallScreen ? 56 : 60,
     backgroundColor: "#000000ff",
@@ -199,27 +200,28 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: 1,
     borderColor: 'rgba(156, 163, 175, 0.2)',
-    borderRadius: 20,
+    borderRadius: 50,
     paddingVertical: isSmallScreen ? 14 : 18,
     paddingHorizontal: isSmallScreen ? 6 : 8,
     overflow: 'hidden',
     position: 'relative',
+    
   },
   pill: {
     position: 'absolute',
-    height: isSmallScreen ? 50 : 54,
-    borderRadius: 30,
+    height: isSmallScreen ? 50 : 50,
+    borderRadius: 50,
     top: '50%',
-    transform: [{ translateY: isSmallScreen ? -12 : -10 }],
+    transform: [{ translateY: isSmallScreen ? -12 : -7}],
     shadowColor: '#3b82f6',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
-    shadowRadius: 20,
+    shadowRadius: 30,
     elevation: 4,
   },
   gradient: {
     flex: 1,
-    borderRadius: 30,
+    borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
   },
