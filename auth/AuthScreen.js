@@ -7,6 +7,7 @@ import {
   ScrollView,
   Animated,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { AntDesign, Entypo, FontAwesome } from '@expo/vector-icons';
 import FullWidthButton from 'components/FullWidthButton';
@@ -20,12 +21,14 @@ const AuthScreen = () => {
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState('login');
   const slideAnim = useRef(new Animated.Value(0)).current;
+  
+  // Local loading state for UI feedback only - prevents black screen
+  const [isLocalLoading, setIsLocalLoading] = useState(false);
 
-  // Zustand store
+  // Zustand store - removed isLoading from destructuring to prevent global loading
   const {
     form,
     errors,
-    isLoading,
     error,
     updateForm,
     clearForm,
@@ -35,6 +38,8 @@ const AuthScreen = () => {
   } = useAuthStore();
 
   const switchTab = (tab) => {
+    if (isLocalLoading) return; // Prevent tab switching during operations
+    
     setActiveTab(tab);
     Animated.timing(slideAnim, {
       toValue: tab === 'login' ? 0 : 1,
@@ -46,23 +51,50 @@ const AuthScreen = () => {
   };
 
   const handleSignUp = async () => {
-    const result = await signUp();
-    if (result.success) {
-      // Navigate to onboarding for new users
-      navigation.navigate('PersonalInfoScreen', { userId: result.userId });
-      console.log("Signup Successful! Starting onboarding...");
-    } else if (result.error) {
-      Alert.alert('Sign Up Failed', result.error);
+    if (isLocalLoading) return; // Prevent double taps
+    
+    setIsLocalLoading(true);
+    clearError();
+    
+    try {
+      const result = await signUp();
+      
+      if (result.success) {
+        console.log("✅ Signup Successful! Auth state will handle navigation...");
+        // Don't navigate manually - let auth state change handle it automatically
+        // The MainNavigator will detect the new authenticated user and show onboarding
+      } else if (result.error) {
+        Alert.alert('Sign Up Failed', result.error);
+      }
+    } catch (error) {
+      console.error('Sign up error:', error);
+      Alert.alert('Sign Up Failed', 'An unexpected error occurred');
+    } finally {
+      setIsLocalLoading(false);
     }
   };
 
   const handleLogin = async () => {
-    const result = await signIn();
-    if (result.success) {
-      console.log("Login Successful!", result.user.uid);
-      // Navigation will be handled by MainNavigator based on onboarding status
-    } else if (result.error) {
-      Alert.alert('Login Failed', result.error);
+    if (isLocalLoading) return; // Prevent double taps
+    
+    setIsLocalLoading(true);
+    clearError();
+    
+    try {
+      const result = await signIn();
+      
+      if (result.success) {
+        console.log("✅ Login Successful! Auth state will handle navigation...");
+        // Don't navigate manually - let auth state change handle it automatically
+        // The MainNavigator will detect the authenticated user and show appropriate screen
+      } else if (result.error) {
+        Alert.alert('Login Failed', result.error);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      Alert.alert('Login Failed', 'An unexpected error occurred');
+    } finally {
+      setIsLocalLoading(false);
     }
   };
 
@@ -74,7 +106,7 @@ const AuthScreen = () => {
         onChangeText={(val) => updateForm('email', val)}
         placeholder="Enter your email"
         hasError={!!errors.email}
-        editable={!isLoading}
+        editable={!isLocalLoading}
       />
       {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
@@ -82,21 +114,25 @@ const AuthScreen = () => {
         value={form.password}
         onChangeText={(val) => updateForm('password', val)}
         placeholder="Enter your password"
-        editable={!isLoading}
+        editable={!isLocalLoading}
       />
       {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
       <TouchableOpacity 
         onPress={() => navigation.navigate("ForgotPasswordScreen")}
-        disabled={isLoading}
+        disabled={isLocalLoading}
       >
-        <Text style={styles.forgotPassword}>Forgot Password?</Text>
+        <Text style={[styles.forgotPassword, isLocalLoading && styles.disabledText]}>
+          Forgot Password?
+        </Text>
       </TouchableOpacity>
       
-      <FullWidthButton 
-        title={isLoading ? "Logging in..." : "Login"} 
+      <FullWidthButton
+        title={isLocalLoading ? "Logging in..." : "Login"}
         onPress={handleLogin}
-        disabled={isLoading}
+        disabled={isLocalLoading}
+        loading={isLocalLoading}
+        icon={isLocalLoading ? <ActivityIndicator size="small" color="#fff" /> : null}
       />
     </>
   );
@@ -109,7 +145,7 @@ const AuthScreen = () => {
         onChangeText={(val) => updateForm('fullName', val)}
         placeholder="Enter your name"
         hasError={!!errors.fullName}
-        editable={!isLoading}
+        editable={!isLocalLoading}
       />
       {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
 
@@ -119,7 +155,7 @@ const AuthScreen = () => {
         onChangeText={(val) => updateForm('email', val)}
         placeholder="Enter your email"
         hasError={!!errors.email}
-        editable={!isLoading}
+        editable={!isLocalLoading}
       />
       {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
@@ -130,7 +166,7 @@ const AuthScreen = () => {
         placeholder="Enter your phone"
         keyboardType="phone-pad"
         hasError={!!errors.phone}
-        editable={!isLoading}
+        editable={!isLocalLoading}
       />
       {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
 
@@ -138,14 +174,16 @@ const AuthScreen = () => {
         value={form.password}
         onChangeText={(val) => updateForm('password', val)}
         placeholder="Enter your password"
-        editable={!isLoading}
+        editable={!isLocalLoading}
       />
       {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
-      <FullWidthButton 
-        title={isLoading ? "Creating Account..." : "Sign Up"} 
+      <FullWidthButton
+        title={isLocalLoading ? "Creating Account..." : "Sign Up"}
         onPress={handleSignUp}
-        disabled={isLoading}
+        disabled={isLocalLoading}
+        loading={isLocalLoading}
+        icon={isLocalLoading ? <ActivityIndicator size="small" color="#fff" /> : null}
       />
     </>
   );
@@ -156,9 +194,13 @@ const AuthScreen = () => {
         <TouchableOpacity 
           style={styles.backButton} 
           onPress={() => navigation.goBack()}
-          disabled={isLoading}
+          disabled={isLocalLoading}
         >
-          <Entypo name="chevron-left" size={28} color="black" />
+          <Entypo 
+            name="chevron-left" 
+            size={28} 
+            color={isLocalLoading ? "#ccc" : "black"} 
+          />
         </TouchableOpacity>
         <Text style={styles.welcomeText}>Welcome</Text>
       </View>
@@ -166,8 +208,13 @@ const AuthScreen = () => {
       {error && (
         <View style={styles.errorContainer}>
           <Text style={styles.globalErrorText}>{error}</Text>
-          <TouchableOpacity onPress={clearError}>
-            <Text style={styles.dismissError}>Dismiss</Text>
+          <TouchableOpacity 
+            onPress={clearError}
+            disabled={isLocalLoading}
+          >
+            <Text style={[styles.dismissError, isLocalLoading && styles.disabledText]}>
+              Dismiss
+            </Text>
           </TouchableOpacity>
         </View>
       )}
@@ -177,18 +224,26 @@ const AuthScreen = () => {
           <TouchableOpacity 
             style={styles.tab} 
             onPress={() => switchTab('login')}
-            disabled={isLoading}
+            disabled={isLocalLoading}
           >
-            <Text style={[styles.tabText, activeTab === 'login' && styles.activeTab]}>
+            <Text style={[
+              styles.tabText, 
+              activeTab === 'login' && styles.activeTab,
+              isLocalLoading && styles.disabledText
+            ]}>
               Login
             </Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.tab} 
             onPress={() => switchTab('signup')}
-            disabled={isLoading}
+            disabled={isLocalLoading}
           >
-            <Text style={[styles.tabText, activeTab === 'signup' && styles.activeTab]}>
+            <Text style={[
+              styles.tabText, 
+              activeTab === 'signup' && styles.activeTab,
+              isLocalLoading && styles.disabledText
+            ]}>
               Sign Up
             </Text>
           </TouchableOpacity>
@@ -226,7 +281,7 @@ const AuthScreen = () => {
           textColor="#000"
           icon={<AntDesign name="google" size={20} color="black" />}
           bordered
-          disabled={isLoading}
+          disabled={isLocalLoading}
         />
       </YStack>
 
@@ -238,7 +293,7 @@ const AuthScreen = () => {
           textColor="#000"
           icon={<AntDesign name="apple1" size={20} color="black" />}
           bordered
-          disabled={isLoading}
+          disabled={isLocalLoading}
         />
       </YStack>
 
@@ -250,7 +305,7 @@ const AuthScreen = () => {
           textColor="#000"
           icon={<FontAwesome name="mobile-phone" size={22} color="black" />}
           bordered
-          disabled={isLoading}
+          disabled={isLocalLoading}
         />
       </YStack>
 
@@ -377,5 +432,8 @@ const styles = StyleSheet.create({
     color: '#1976d2',
     fontSize: 14,
     fontWeight: '600',
+  },
+  disabledText: {
+    opacity: 0.5,
   },
 });

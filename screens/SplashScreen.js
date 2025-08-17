@@ -1,45 +1,34 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, Animated } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-
+import { View, Text, StyleSheet, Animated } from 'react-native';
 
 const SplashScreen = () => {
-  const navigation = useNavigation();
-  const logoAnim = useRef(new Animated.Value(0)).current; // opacity + scale
-  const textAnim = useRef(new Animated.Value(0)).current; // opacity
-  const descAnim = useRef(new Animated.Value(0)).current; // opacity + slight slide
+  const logoAnim = useRef(new Animated.Value(0)).current;
+  const textAnim = useRef(new Animated.Value(0)).current;
+  const descAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-
-    // Sequential Animation
+    // Just run the animations - NO navigation
     Animated.sequence([
       Animated.timing(logoAnim, {
         toValue: 1,
-        duration: 1500,
+        duration: 1000, // Reduced from 1500ms
         useNativeDriver: true,
       }),
       Animated.timing(textAnim, {
         toValue: 1,
-        duration: 600,
+        duration: 400, // Reduced from 600ms
         useNativeDriver: true,
       }),
       Animated.timing(descAnim, {
         toValue: 1,
-        duration: 500,
+        duration: 300, // Reduced from 500ms
         useNativeDriver: true,
       }),
     ]).start();
 
-
-    const timer = setTimeout(() => {
-      navigation.navigate("Onboarding");
-    }, 6000);
-
-    return () => clearTimeout(timer);
-
+    // ⚠️ REMOVED THE TIMER AND NAVIGATION - MainNavigator handles this now
+    console.log('🎨 Splash animations started');
   }, []);
-
-
 
   return (
     <View style={styles.container}>
@@ -72,7 +61,7 @@ const SplashScreen = () => {
               {
                 translateY: descAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [10, 0], // slide up a little
+                  outputRange: [10, 0],
                 }),
               },
             ],

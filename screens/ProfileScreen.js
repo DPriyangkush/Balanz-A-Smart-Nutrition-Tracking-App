@@ -56,7 +56,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const [userData, setUserData] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
-
+  
   // Get signOut function from auth store
   const { signOut } = useAuthStore();
 

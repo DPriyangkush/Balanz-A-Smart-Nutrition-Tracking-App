@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { View, StyleSheet, ActivityIndicator } from "react-native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import useAuthStore from "../stores/authStore";
+
+// Import skeleton loaders
+import { AuthScreenSkeleton, HomeScreenSkeleton, GenericSkeleton } from "../components/SkeletonLoader";
 
 // Screens
 import SplashScreen from "../screens/SplashScreen";
@@ -33,16 +36,6 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const AppTabs = ({ navigation, route }) => {
-  const routeName = getFocusedRouteNameFromRoute(route) ?? "Dashboard";
-
-  const screenTitles = {
-    Dashboard: "Dashboard",
-    Meal: "Meal Plan",
-    AI: "AI Assistant",
-    Progress: "Progress",
-    Profile: "Profile",
-  };
-  
   return (
     <View style={styles.appContainer}>
       <View style={styles.tabsWrapper}>
@@ -64,18 +57,54 @@ const AppTabs = ({ navigation, route }) => {
   );
 };
 
-const LoadingScreen = () => (
-  <View style={styles.loadingContainer}>
-    <ActivityIndicator size="large" color="#007BFF" />
-  </View>
-);
+// Replace LoadingScreen with contextual skeleton loaders
+const LoadingScreen = ({ context = "generic" }) => {
+  switch (context) {
+    case "auth":
+      return <AuthScreenSkeleton />;
+    case "dashboard":
+      return <HomeScreenSkeleton />;
+    case "onboarding":
+      return (
+        <GenericSkeleton>
+          <View style={styles.onboardingSkeleton}>
+            {/* Header skeleton */}
+            <View style={styles.skeletonHeader}>
+              <View style={[styles.skeletonBox, { width: 200, height: 28 }]} />
+              <View style={[styles.skeletonBox, { width: '80%', height: 16, marginTop: 12 }]} />
+            </View>
+            
+            {/* Form fields skeleton */}
+            <View style={styles.skeletonForm}>
+              <View style={[styles.skeletonBox, { width: '100%', height: 50, marginBottom: 20 }]} />
+              <View style={[styles.skeletonBox, { width: '100%', height: 50, marginBottom: 20 }]} />
+              <View style={[styles.skeletonBox, { width: '100%', height: 50, marginBottom: 30 }]} />
+              <View style={[styles.skeletonBox, { width: '100%', height: 50 }]} />
+            </View>
+          </View>
+        </GenericSkeleton>
+      );
+    default:
+      return (
+        <GenericSkeleton>
+          <View style={styles.genericSkeleton}>
+            <View style={[styles.skeletonBox, { width: '60%', height: 24, marginBottom: 20 }]} />
+            <View style={[styles.skeletonBox, { width: '100%', height: 100, marginBottom: 20 }]} />
+            <View style={[styles.skeletonBox, { width: '80%', height: 16, marginBottom: 12 }]} />
+            <View style={[styles.skeletonBox, { width: '70%', height: 16, marginBottom: 12 }]} />
+            <View style={[styles.skeletonBox, { width: '90%', height: 16 }]} />
+          </View>
+        </GenericSkeleton>
+      );
+  }
+};
 
 // Wrapper components with user ID
 const createWrapperComponent = (Component) => (props) => {
   const { user } = useAuthStore();
   
   if (!user?.uid) {
-    return <LoadingScreen />;
+    return <LoadingScreen context="onboarding" />;
   }
 
   const routeWithParams = {
@@ -94,114 +123,138 @@ const GoalPreferenceWrapper = createWrapperComponent(GoalPreferenceScreen);
 const DietPreferenceWrapper = createWrapperComponent(DietPreferenceScreen);
 
 const MainNavigator = () => {
-  const [appReady, setAppReady] = useState(false);
+  // App states
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
-  const [initialSplashDone, setInitialSplashDone] = useState(false);
+  const [appInitialized, setAppInitialized] = useState(false);
+  
+  // Track splash state - once hidden, never show again
+  const [splashVisible, setSplashVisible] = useState(true);
+  const splashHiddenPermanently = useRef(false);
   
   const { 
     user, 
+    userProfile,
     isLoading, 
     isInitialized, 
     hasCompletedOnboarding,
+    isProfileLoaded, // New flag from store
     initializeAuthListener 
   } = useAuthStore();
 
-  // Derive authentication status from user existence
   const isAuthenticated = !!user && !!user.uid;
 
-  // Effect to handle authentication state changes
-  useEffect(() => {
-    // Once auth is initialized, hide splash for any auth state change
-    if (isInitialized) {
-      console.log('🔄 Auth initialized - hiding splash');
-      setShowSplash(false);
-    }
-  }, [isInitialized]);
-
+  // Initialize app ONCE on mount
   useEffect(() => {
     let authUnsubscribe;
     
     const initializeApp = async () => {
-      console.log('🚀 App starting...');
+      console.log('🚀 Initializing app...');
       
       try {
-        // 🧹 TEMPORARY: Clear storage for testing (remove after testing!)
-        // await AsyncStorage.multiRemove(['hasSeenOnboarding', 'auth-storage']);
-        
-        // Initialize auth listener
-        authUnsubscribe = initializeAuthListener();
-        
-        // Check onboarding status
+        // Check if user has seen onboarding
         const onboardingSeen = await AsyncStorage.getItem('hasSeenOnboarding');
         setHasSeenOnboarding(onboardingSeen === 'true');
-        console.log('📱 Has seen onboarding:', onboardingSeen === 'true');
         
-        // Show splash for minimum 2 seconds for initial load only
+        // Initialize Firebase auth listener
+        authUnsubscribe = initializeAuthListener();
+        
+        console.log('✅ App initialization complete');
+        
+        // Wait for auth to initialize, then hide splash
         setTimeout(() => {
-          console.log('✅ Initial splash timer finished');
-          setInitialSplashDone(true);
-          // Don't hide splash here - let auth state handle it
+          setAppInitialized(true);
         }, 2000);
         
-        // Mark app as ready
-        setAppReady(true);
-        console.log('✅ App ready');
-        
       } catch (error) {
-        console.error('❌ App initialization error:', error);
+        console.error('❌ App initialization failed:', error);
         setHasSeenOnboarding(false);
-        setShowSplash(false);
-        setAppReady(true);
+        setAppInitialized(true);
       }
     };
 
     initializeApp();
 
     return () => {
-      if (authUnsubscribe) {
-        authUnsubscribe();
-      }
+      if (authUnsubscribe) authUnsubscribe();
     };
   }, []);
 
-  // Debug current state
+  // Hide splash when app is ready AND auth is fully initialized
+  useEffect(() => {
+    // For authenticated users: wait for profile to be loaded
+    // For non-authenticated users: just wait for auth to be initialized
+    const authSetupComplete = isInitialized && (!isAuthenticated || isProfileLoaded);
+    
+    if (appInitialized && authSetupComplete && !splashHiddenPermanently.current) {
+      console.log('🎬 Hiding splash screen permanently');
+      setSplashVisible(false);
+      splashHiddenPermanently.current = true;
+    }
+  }, [appInitialized, isInitialized, isAuthenticated, isProfileLoaded]);
+
+  // Force hide splash if it's been more than 10 seconds (failsafe)
+  useEffect(() => {
+    const failsafeTimer = setTimeout(() => {
+      if (!splashHiddenPermanently.current) {
+        console.log('⚠️ Failsafe: Hiding splash after 10 seconds');
+        setSplashVisible(false);
+        splashHiddenPermanently.current = true;
+      }
+    }, 10000);
+
+    return () => clearTimeout(failsafeTimer);
+  }, []);
+
   console.log('🔍 App State:', {
-    appReady,
-    showSplash,
-    initialSplashDone,
+    splashVisible,
+    appInitialized,
     hasSeenOnboarding,
     isAuthenticated,
     isInitialized,
-    isLoading,
+    isProfileLoaded,
     hasCompletedOnboarding,
-    userExists: !!user
+    authSetupComplete: isInitialized && (!isAuthenticated || isProfileLoaded)
   });
 
-  // Show splash screen only for initial app load
-  if (!appReady || (showSplash && !isInitialized)) {
+  // Show splash ONLY if it hasn't been permanently hidden
+  if (splashVisible && !splashHiddenPermanently.current) {
     console.log('🌟 Showing splash screen');
     return <SplashScreen />;
   }
 
-  // Show loading only if auth is still loading AND we're not in an error state
-  if (isLoading && isInitialized) {
-    console.log('⏳ Showing loading screen');
-    return <LoadingScreen />;
+  // Show skeleton loading if auth is not initialized OR if user is authenticated but profile not loaded
+  if (!isInitialized || (isAuthenticated && !isProfileLoaded)) {
+    const loadingContext = !isInitialized ? 'auth' : 'dashboard';
+    const loadingReason = !isInitialized ? 'auth initialization' : 'profile loading';
+    console.log(`⏳ Showing skeleton loading (${loadingReason})...`);
+    return <LoadingScreen context={loadingContext} />;
   }
 
-  // Authenticated user
-  if (isAuthenticated && user) {
-    console.log('👤 Authenticated user detected');
+  // ========== AUTHENTICATED USER FLOWS ==========
+  if (isAuthenticated) {
+    console.log('👤 User authenticated, onboarding status:', hasCompletedOnboarding);
     
     if (hasCompletedOnboarding) {
-      console.log('✅ User has completed onboarding - showing main app');
+      console.log('✅ Showing main app - user completed onboarding');
       return (
-        <Stack.Navigator>
+        <Stack.Navigator
+          screenOptions={{
+            headerShown: false,
+            cardStyle: { backgroundColor: '#fff' },
+            presentation: 'card',
+            animationEnabled: true,
+            animationTypeForReplace: 'reveal_from_bottom',
+            gestureEnabled: true,
+          }}
+        >
           <Stack.Screen
             name="MainTabs"
             component={AppTabs}
-            options={{ headerShown: false }}
+            options={{ 
+              headerShown: false,
+              animationEnabled: false,
+              animation: "reveal_from_bottom"
+            }}
           />
           <Stack.Screen
             name="Details"
@@ -221,13 +274,22 @@ const MainNavigator = () => {
         </Stack.Navigator>
       );
     } else {
-      console.log('📝 User needs profile onboarding');
+      console.log('📝 User needs onboarding - showing PersonalInfoScreen');
       return (
         <Stack.Navigator 
           initialRouteName="PersonalInfoScreen"
-          screenOptions={{ headerShown: false }}
+          screenOptions={{ 
+            headerShown: false,
+            cardStyle: { backgroundColor: '#fff' },
+            animationEnabled: true,
+            animationTypeForReplace: 'push',
+          }}
         >
-          <Stack.Screen name="PersonalInfoScreen" component={PersonalInfoWrapper} />
+          <Stack.Screen 
+            name="PersonalInfoScreen" 
+            component={PersonalInfoWrapper}
+            options={{ animationEnabled: false }}
+          />
           <Stack.Screen name="GoalPreferenceScreen" component={GoalPreferenceWrapper} />
           <Stack.Screen name="DietPreferenceScreen" component={DietPreferenceWrapper} />
         </Stack.Navigator>
@@ -235,26 +297,25 @@ const MainNavigator = () => {
     }
   }
 
-  // Unauthenticated user
-  console.log('🚪 Unauthenticated user');
-  
+  // ========== UNAUTHENTICATED USER FLOWS ==========
   if (!hasSeenOnboarding) {
-    console.log('🎬 New user - showing onboarding');
+    console.log('🎬 New user - showing onboarding flow');
     return (
       <Stack.Navigator 
         initialRouteName="Onboarding"
-        screenOptions={{ headerShown: false }}
+        screenOptions={{ 
+          headerShown: false,
+          cardStyle: { backgroundColor: '#fff' },
+          animationEnabled: true,
+          animationTypeForReplace: 'slide_from_bottom',
+        }}
       >
         <Stack.Screen 
           name="Onboarding" 
           component={Onboarding}
-          options={{ animation: "fade" }} 
+          options={{ animationEnabled: false }}
         />
-        <Stack.Screen 
-          name="AuthScreen" 
-          component={AuthScreen}
-          options={{ animation: "reveal_from_bottom" }} 
-        />
+        <Stack.Screen name="AuthScreen" component={AuthScreen} options={{animation: "slide_from_bottom"}} />
         <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} />
         <Stack.Screen name="VerifyOTPScreen" component={VerifyOTPScreen} />
         <Stack.Screen name="PasswordCreationScreen" component={PasswordCreationScreen} />
@@ -269,15 +330,21 @@ const MainNavigator = () => {
   return (
     <Stack.Navigator 
       initialRouteName="AuthScreen"
-      screenOptions={{ headerShown: false }}
+      screenOptions={{ 
+        headerShown: false,
+        cardStyle: { backgroundColor: '#fff' },
+        animationEnabled: true,
+        animationTypeForReplace: 'push',
+      }}
     >
       <Stack.Screen 
         name="AuthScreen" 
         component={AuthScreen}
+        options={{ animationEnabled: false, animation: "reveal_from_bottom" } }
       />
-      <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} />
-      <Stack.Screen name="VerifyOTPScreen" component={VerifyOTPScreen} />
-      <Stack.Screen name="PasswordCreationScreen" component={PasswordCreationScreen} />
+      <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} options={{animation: "slide_from_bottom"}} />
+      <Stack.Screen name="VerifyOTPScreen" component={VerifyOTPScreen} options={{animation: "slide_from_bottom"}} />
+      <Stack.Screen name="PasswordCreationScreen" component={PasswordCreationScreen} options={{animation: "slide_from_bottom"}} />
       <Stack.Screen name="PersonalInfoScreen" component={PersonalInfoWrapper} />
       <Stack.Screen name="GoalPreferenceScreen" component={GoalPreferenceWrapper} />
       <Stack.Screen name="DietPreferenceScreen" component={DietPreferenceWrapper} />
@@ -288,15 +355,38 @@ const MainNavigator = () => {
 const styles = StyleSheet.create({
   appContainer: {
     flex: 1,
+    backgroundColor: '#fff',
   },
   tabsWrapper: {
     flex: 1,
+    backgroundColor: '#fff',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fff',
+  },
+  // Skeleton styles
+  onboardingSkeleton: {
+    flex: 1,
+    paddingTop: 60,
+  },
+  skeletonHeader: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  skeletonForm: {
+    paddingHorizontal: 20,
+  },
+  genericSkeleton: {
+    flex: 1,
+    paddingTop: 60,
+    paddingHorizontal: 20,
+  },
+  skeletonBox: {
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
   },
 });
 
