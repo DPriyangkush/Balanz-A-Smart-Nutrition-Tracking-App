@@ -18,6 +18,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import ProfileTabs from "../components/ProfileTabs";
 import LogoutButton from "../components/LogoutButton";
 import useAuthStore from "../stores/authStore"; // Add this import
+import { ProfileWrapper } from "../components/ScreenWrappers"; // Add this import
 
 const { width } = Dimensions.get("window");
 
@@ -136,67 +137,69 @@ export default function ProfileScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      {/* Orange-to-dark background */}
-      <LinearGradient
-        colors={["#ff6a00ff", "#f29350ff", "#1a1a1a"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 0.5 }}
-        style={StyleSheet.absoluteFill}
-      />
-
-      <CircularOverlay />
-      <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
-      <View style={styles.minimalGlassOverlay} />
-
-      {/* Profile Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 30 }]}>
-        <Image
-          source={{
-            uri:
-              userData?.avatar ||
-              "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde",
-          }}
-          style={styles.avatar}
+    <ProfileWrapper>
+      <View style={styles.container}>
+        {/* Orange-to-dark background */}
+        <LinearGradient
+          colors={["#ff6a00ff", "#f29350ff", "#1a1a1a"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 0.5 }}
+          style={StyleSheet.absoluteFill}
         />
-        <View>
-          <Text style={styles.name}>
-            {userData?.fullName || "JAMES ANDERSON"}
-          </Text>
+
+        <CircularOverlay />
+        <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={styles.minimalGlassOverlay} />
+
+        {/* Profile Header - Adjusted for wrapper */}
+        <View style={[styles.header, { paddingTop: 30 }]}>
+          <Image
+            source={{
+              uri:
+                userData?.avatar ||
+                "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde",
+            }}
+            style={styles.avatar}
+          />
+          <View>
+            <Text style={styles.name}>
+              {userData?.fullName || "JAMES ANDERSON"}
+            </Text>
+          </View>
+          <TouchableOpacity style={styles.editIcon}>
+            <Ionicons name="pencil" size={24} color="#fff" />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.editIcon}>
-          <Ionicons name="pencil" size={24} color="#fff" />
-        </TouchableOpacity>
+
+        {/* Stats */}
+        <View style={styles.statsRow}>
+          <View style={styles.statBox}>
+            <Text style={styles.statLabel}>Age</Text>
+            <Text style={styles.statValue}>
+              {userData?.personalInfo?.age ? `${userData.personalInfo?.age} yr's` : "21 yo"}
+            </Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statLabel}>Height</Text>
+            <Text style={styles.statValue}>
+              {userData?.personalInfo?.height ? `${userData?.personalInfo?.height} ${userData?.personalInfo?.heightUnit}` : "5,97 ft"}
+            </Text>
+          </View>
+          <View style={styles.statBox}>
+            <Text style={styles.statLabel}>Weight</Text>
+            <Text style={styles.statValue}>
+              {userData?.personalInfo?.weight ? `${userData.personalInfo?.weight} ${userData?.personalInfo?.weightUnit}` : "80 kilo"}
+            </Text>
+          </View>
+        </View>
+
+        {/* Tabs */}
+        <ProfileTabs onTabChange={setActiveTab} />
+
+        {/* Logout Button */}
+        <LogoutButton onLogout={handleLogout} />
       </View>
-
-      {/* Stats */}
-      <View style={styles.statsRow}>
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Age</Text>
-          <Text style={styles.statValue}>
-            {userData?.personalInfo?.age ? `${userData.personalInfo?.age} yr's` : "21 yo"}
-          </Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Height</Text>
-          <Text style={styles.statValue}>
-            {userData?.personalInfo?.height ? `${userData?.personalInfo?.height} ${userData?.personalInfo?.heightUnit}` : "5,97 ft"}
-          </Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statLabel}>Weight</Text>
-          <Text style={styles.statValue}>
-            {userData?.personalInfo?.weight ? `${userData.personalInfo?.weight} ${userData?.personalInfo?.weightUnit}` : "80 kilo"}
-          </Text>
-        </View>
-      </View>
-
-      {/* Tabs */}
-      <ProfileTabs onTabChange={setActiveTab} />
-
-      {/* Logout Button */}
-      <LogoutButton onLogout={handleLogout} />
-    </View>
+    </ProfileWrapper>
   );
 }
 

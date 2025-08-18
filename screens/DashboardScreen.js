@@ -1,15 +1,14 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Svg, Circle } from 'react-native-svg';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import BottomNav from 'components/BottomNav';
+import { DashboardWrapper } from '../components/ScreenWrappers';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const CircularOverlay = () => {
   const size = 800;
-  const center = size / 2;
+  const center = size / 5;
   const radii = [100, 200, 300, 400, 500];
   
   return (
@@ -18,7 +17,7 @@ const CircularOverlay = () => {
       width={size}
       style={{
         position: 'absolute',
-        top: -size / 1.5,
+        top: -size / 6,
         left: '50%',
         transform: [{ translateX: -center }],
         zIndex: 1,
@@ -40,104 +39,83 @@ const CircularOverlay = () => {
 };
 
 const DashboardScreen = () => {
-  const insets = useSafeAreaInsets();
-  
-
   return (
-    <View style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        bounces={true}
-        scrollEventThrottle={16}
+    <DashboardWrapper>
+      <LinearGradient
+        colors={['#151514', '#2A2A28']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        
+        style={styles.gradient}
       >
-        <LinearGradient
-          colors={['#81C784', '#E8F5E9']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={styles.gradient}
-        >
-          <CircularOverlay />
+         {/**  <CircularOverlay /> */}
 
-          {/* No paddingTop here — just marginTop on title */}
-          <View style={styles.content}>
-            <Text style={[styles.title, { marginTop: insets.top }]}>Dashboard</Text>
+        <View style={styles.content}>
+          <Text style={styles.subtitle}>Good Morning, Jacob</Text>
+          
 
-            <Text style={styles.subtitle}>Welcome to your dashboard</Text>
 
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Today's Overview</Text>
-              <Text style={styles.cardText}>Your daily summary goes here</Text>
-            </View>
-
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Recent Activity</Text>
-              <Text style={styles.cardText}>Your recent activities</Text>
-            </View>
-
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Quick Stats</Text>
-              <Text style={styles.cardText}>Key metrics and statistics</Text>
-            </View>
-
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Recommendations</Text>
-              <Text style={styles.cardText}>Personalized suggestions for you</Text>
-            </View>
-
-            {Array.from({ length: 8 }, (_, i) => (
-              <View key={i} style={styles.card}>
-                <Text style={styles.cardTitle}>Section {i + 1}</Text>
-                <Text style={styles.cardText}>
-                  This is additional content to demonstrate the scrolling effect 
-                  and how the frosted header stays on top with blur effect. 
-                  The content should scroll completely behind the header.
-                </Text>
-              </View>
-            ))}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Today's Overview</Text>
+            <Text style={styles.cardText}>Your daily summary goes here</Text>
           </View>
-        </LinearGradient>
-      </ScrollView>
-    </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Recent Activity</Text>
+            <Text style={styles.cardText}>Your recent activities</Text>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Quick Stats</Text>
+            <Text style={styles.cardText}>Key metrics and statistics</Text>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Recommendations</Text>
+            <Text style={styles.cardText}>Personalized suggestions for you</Text>
+          </View>
+
+          {Array.from({ length: 8 }, (_, i) => (
+            <View key={i} style={styles.card}>
+              <Text style={styles.cardTitle}>Section {i + 1}</Text>
+              <Text style={styles.cardText}>
+                This is additional content to demonstrate the scrolling effect 
+                and how the stretchy header works. The header image will stretch 
+                when you pull down and collapse when you scroll up.
+              </Text>
+            </View>
+          ))}
+
+          <View style={styles.spacer} />
+        </View>
+      </LinearGradient>
+    </DashboardWrapper>
   );
 };
 
 export default DashboardScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#81C784',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
   gradient: {
-    minHeight: screenHeight * 1.5,
+    minHeight: screenHeight * 1.2,
     width: screenWidth,
+    position: 'relative',
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    backgroundColor: "#CCFCCB"
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingBottom: 120,
+    paddingTop: 20,
     zIndex: 2,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
-    textAlign: 'center',
   },
   subtitle: {
     fontSize: 18,
     color: 'rgba(255,255,255,0.9)',
     textAlign: 'center',
     marginBottom: 30,
+    fontWeight: '500',
   },
   card: {
     backgroundColor: 'rgba(255,255,255,0.25)',
@@ -151,6 +129,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: 'rgba(255,255,255,0.2)',
     marginBottom: 16,
+    backdropFilter: 'blur(10px)',
   },
   cardTitle: {
     fontSize: 18,
@@ -162,5 +141,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255,255,255,0.85)',
     lineHeight: 20,
+  },
+  spacer: {
+    height: 100,
   },
 });

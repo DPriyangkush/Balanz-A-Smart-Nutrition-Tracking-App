@@ -118,7 +118,7 @@ const BottomNav = ({ state, descriptors, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <BlurView intensity={0} tint="light" style={styles.blurContainer}>
+      <BlurView intensity={100} tint="systemThickMaterialDark" style={styles.blurContainer}>
         <View 
           ref={containerRef}
           style={styles.navContainer}
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     overflow: 'hidden',
     height: isSmallScreen ? 56 : 60,
-    backgroundColor: "#000000ff",
+    backgroundColor: "transparent",
     alignItems: 'center',
     
   },

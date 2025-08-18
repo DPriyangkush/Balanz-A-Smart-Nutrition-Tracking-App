@@ -44,6 +44,8 @@ const AppTabs = ({ navigation, route }) => {
           screenOptions={{
             headerShown: false,
             unmountOnBlur: false,
+            lazy: true,
+            lazyPreloadDistance: 0,
           }}
         >
           <Tab.Screen name="Dashboard" component={DashboardScreen} />
