@@ -8,7 +8,7 @@ export const DashboardWrapper = ({ children, ...props }) => {
   return (
     <StretchyHeader
       title="Balanz"
-      gradientColors={['#5FAF74', '#3C8C4E', '#151514']}
+      gradientColors={['#FFF8E8', '#FFF8E8', '#FFF8E8']}
       blurIntensity={100} // iOS-level blur intensity
       headerHeight={90}
       {...props}
@@ -27,7 +27,7 @@ export const MealWrapper = ({ children, ...props }) => {
       title="Meals"
       gradientColors={['#FF6B6B', '#FF8E8E', '#FFB6B6']}
       blurIntensity={100}
-      headerHeight={130}
+      headerHeight={90}
       {...props}
     >
       <View style={styles.contentWrapper}>

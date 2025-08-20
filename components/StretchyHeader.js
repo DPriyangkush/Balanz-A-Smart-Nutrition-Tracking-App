@@ -49,7 +49,7 @@ export default function StretchyHeader({
   });
 
   const titleStyle = useAnimatedStyle(() => {
-    const minScale = 0.7;
+    const minScale = 0.9;
     const maxScale = 1.2;
     
     const scale = interpolate(
@@ -63,7 +63,7 @@ export default function StretchyHeader({
     const opacity = interpolate(
       scrollY.value,
       [0, headerHeight * 0.15], // Start showing title after 15% scroll
-      [0, 1], // From completely hidden to fully visible
+      [1, 1], // From completely hidden to fully visible
       Extrapolate.CLAMP
     );
 
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "#CCFCCB", // Light solid color - change this to your preferred initial color
+    backgroundColor: "#FFF8E8", // Light solid color - change this to your preferred initial color
   },
   gradientContainer: {
     position: "absolute",
@@ -299,6 +299,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
     justifyContent: 'center',
     alignItems: 'center',
+    width: '100%',
   },
   titleWrapper: {
     alignItems: 'center',
@@ -306,11 +307,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   title: {
-    fontSize: 32,
+    fontSize: 20,
     fontWeight: "600",
     textAlign: 'center',
     fontFamily: "Inter",
-    letterSpacing: 1.5,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
     textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
