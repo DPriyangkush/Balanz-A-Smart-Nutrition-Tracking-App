@@ -1,7 +1,10 @@
 import React from 'react';
-import { TouchableOpacity, Image, Text, StyleSheet, View, ScrollView } from 'react-native';
+import { TouchableOpacity, Image, Text, StyleSheet, View, ScrollView, Dimensions } from 'react-native';
 import { Card, XStack, YStack } from 'tamagui';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 const RecipeSuggestionCards = ({ recipes, onRecipePress }) => {
   const defaultRecipes = [
@@ -48,18 +51,63 @@ const RecipeSuggestionCards = ({ recipes, onRecipePress }) => {
 
   const recipesList = recipes || defaultRecipes;
 
+  // Responsive calculations
+  const isSmallScreen = screenWidth < 380;
+  const isMediumScreen = screenWidth >= 380 && screenWidth < 768;
+  const isLargeScreen = screenWidth >= 768;
+  const isTablet = screenWidth >= 768;
+
+  // Card dimensions based on screen size
+  const getCardWidth = () => {
+    if (isSmallScreen) return screenWidth * 0.85; // 85% of screen width
+    if (isMediumScreen) return screenWidth * 0.8;  // 80% of screen width
+    if (isLargeScreen) return Math.min(350, screenWidth * 0.6); // Max 350px or 60% of screen
+    return 350;
+  };
+
+  const getImageHeight = () => {
+    if (isSmallScreen) return 160;
+    if (isMediumScreen) return 180;
+    return 200;
+  };
+
+  const getHorizontalPadding = () => {
+    if (isSmallScreen) return 16;
+    if (isMediumScreen) return 20;
+    return 24;
+  };
+
+  const getCardMargin = () => {
+    if (isSmallScreen) return 12;
+    if (isMediumScreen) return 16;
+    return 20;
+  };
+
+  const getHeartSize = () => {
+    if (isSmallScreen) return { container: 26, icon: 14 };
+    if (isMediumScreen) return { container: 30, icon: 16 };
+    return { container: 36, icon: 20 };
+  };
+
+  const cardWidth = getCardWidth();
+  const imageHeight = getImageHeight();
+  const horizontalPadding = getHorizontalPadding();
+  const cardMargin = getCardMargin();
+  const heartSize = getHeartSize();
+
   const renderStars = (rating) => {
     const stars = [];
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
+    const starSize = isSmallScreen ? 10 : 12;
     
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(<Ionicons key={i} name="star" size={12} color="#FFD700" />);
+        stars.push(<Ionicons key={i} name="star" size={starSize} color="#FFD700" />);
       } else if (i === fullStars && hasHalfStar) {
-        stars.push(<Ionicons key={i} name="star-half" size={12} color="#FFD700" />);
+        stars.push(<Ionicons key={i} name="star-half" size={starSize} color="#FFD700" />);
       } else {
-        stars.push(<Ionicons key={i} name="star-outline" size={12} color="#DDD" />);
+        stars.push(<Ionicons key={i} name="star-outline" size={starSize} color="#DDD" />);
       }
     }
     return stars;
@@ -74,94 +122,275 @@ const RecipeSuggestionCards = ({ recipes, onRecipePress }) => {
     }
   };
 
+  const responsiveStyles = StyleSheet.create({
+    container: {
+      marginBottom: 0,
+    },
+    scrollContainer: {
+      paddingHorizontal: horizontalPadding,
+      paddingRight: horizontalPadding + cardMargin,
+    },
+    recipeCard: {
+      backgroundColor: '#FFF',
+      width: cardWidth,
+      marginRight: cardMargin,
+      marginBottom: 10,
+    },
+    lastCard: {
+      marginRight: horizontalPadding,
+    },
+    imageContainer: {
+      position: 'relative',
+      height: imageHeight,
+    },
+    recipeImage: {
+      width: '100%',
+      height: '100%',
+      resizeMode: 'cover',
+    },
+    gradientOverlay: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: isSmallScreen ? 60 : 80,
+    },
+    overlayBadges: {
+      position: 'absolute',
+      top: isSmallScreen ? 10 : 15,
+      left: isSmallScreen ? 10 : 15,
+      right: isSmallScreen ? 10 : 15,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+    },
+    difficultyBadge: {
+      paddingHorizontal: isSmallScreen ? 8 : 12,
+      paddingVertical: isSmallScreen ? 4 : 6,
+      borderRadius: 20,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    difficultyText: {
+      color: '#FFF',
+      fontSize: isSmallScreen ? 10 : 12,
+      fontWeight: '600',
+    },
+    favoriteButton: {
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderRadius: heartSize.container / 2,
+      width: heartSize.container,
+      height: heartSize.container,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.2,
+      shadowRadius: 2,
+      elevation: 3,
+    },
+    timeBadge: {
+      position: 'absolute',
+      bottom: isSmallScreen ? 15 : 25,
+      right: isSmallScreen ? 10 : 15,
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      paddingHorizontal: isSmallScreen ? 8 : 12,
+      paddingVertical: isSmallScreen ? 4 : 6,
+      borderRadius: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    timeText: {
+      color: '#FFF',
+      fontSize: isSmallScreen ? 10 : 12,
+      fontWeight: '500',
+    },
+    contentSection: {
+      padding: isSmallScreen ? 12 : 16,
+      paddingTop: isSmallScreen ? 6 : 8,
+    },
+    recipeTitle: {
+      fontSize: isSmallScreen ? 16 : isTablet ? 20 : 18,
+      fontWeight: 'bold',
+      color: '#2D2419',
+      lineHeight: isSmallScreen ? 20 : isTablet ? 26 : 24,
+    },
+    chefName: {
+      fontSize: isSmallScreen ? 11 : 13,
+      color: '#8B7355',
+      fontWeight: '500',
+    },
+    recipeDescription: {
+      fontSize: isSmallScreen ? 11 : 13,
+      color: '#666',
+      lineHeight: isSmallScreen ? 16 : 18,
+    },
+    tagsContainer: {
+      flexWrap: 'wrap',
+      gap: isSmallScreen ? 4 : 6,
+    },
+    tag: {
+      backgroundColor: '#F0F8F0',
+      paddingHorizontal: isSmallScreen ? 8 : 10,
+      paddingVertical: isSmallScreen ? 3 : 4,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: '#E8F5E8',
+    },
+    tagText: {
+      fontSize: isSmallScreen ? 10 : 11,
+      color: '#27AE60',
+      fontWeight: '500',
+    },
+    statsSection: {
+      marginTop: 4,
+    },
+    ratingText: {
+      fontSize: isSmallScreen ? 11 : 13,
+      color: '#333',
+      fontWeight: '600',
+    },
+    caloriesText: {
+      fontSize: isSmallScreen ? 11 : 13,
+      color: '#666',
+      fontWeight: '500',
+    },
+    favoriteIcon: {
+      size: heartSize.icon,
+    },
+    timeIcon: {
+      size: isSmallScreen ? 12 : 14,
+    },
+    fireIcon: {
+      size: isSmallScreen ? 14 : 16,
+    },
+  });
+
   return (
-    <View style={styles.container}>
+    <View style={responsiveStyles.container}>
       <ScrollView 
         horizontal={true}
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContainer}
+        contentContainerStyle={responsiveStyles.scrollContainer}
         decelerationRate="fast"
-        snapToInterval={320} // Width of card + margin
+        snapToInterval={cardWidth + cardMargin}
         snapToAlignment="start"
+        pagingEnabled={false}
+        removeClippedSubviews={true}
+        initialNumToRender={2}
+        maxToRenderPerBatch={3}
       >
         {recipesList.map((recipe, index) => (
           <Card
             key={recipe.id}
-            style={[styles.recipeCard, index === recipesList.length - 1 && styles.lastCard]}
+            style={[
+              responsiveStyles.recipeCard, 
+              index === recipesList.length - 1 && responsiveStyles.lastCard
+            ]}
             backgroundColor="$background"
-            borderRadius={20}
+            borderRadius={isSmallScreen ? 16 : 20}
             shadowColor="$shadowColor"
             shadowOffset={{ width: 0, height: 4 }}
             shadowOpacity={0.12}
             shadowRadius={12}
             elevation={6}
+            overflow="hidden"
           >
             <TouchableOpacity 
               onPress={() => onRecipePress && onRecipePress(recipe)}
               activeOpacity={0.95}
             >
               <YStack>
-                {/* Image Section */}
-                <View style={styles.imageContainer}>
-                  <Image source={{ uri: recipe.imageUri }} style={styles.recipeImage} />
+                {/* Image Section with Gradient */}
+                <View style={responsiveStyles.imageContainer}>
+                  <Image source={{ uri: recipe.imageUri }} style={responsiveStyles.recipeImage} />
                   
+                  {/* Smooth gradient overlay that fades image into content */}
+                  <LinearGradient
+                    colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.1)', 'rgba(255,255,255,0.9)', 'rgba(255,255,255,1)']}
+                    style={responsiveStyles.gradientOverlay}
+                    locations={[0, 0.3, 0.8, 1]}
+                  />
+
                   {/* Overlay Badges */}
-                  <View style={styles.overlayBadges}>
-                    <View style={[styles.difficultyBadge, { backgroundColor: getDifficultyColor(recipe.difficulty) }]}>
-                      <Text style={styles.difficultyText}>{recipe.difficulty}</Text>
+                  <View style={responsiveStyles.overlayBadges}>
+                    <View style={[responsiveStyles.difficultyBadge, { backgroundColor: getDifficultyColor(recipe.difficulty) }]}>
+                      <Text style={responsiveStyles.difficultyText}>{recipe.difficulty}</Text>
                     </View>
-                    <TouchableOpacity style={styles.favoriteButton}>
-                      <Ionicons name="heart-outline" size={20} color="#FFF" />
+                    <TouchableOpacity 
+                      style={responsiveStyles.favoriteButton}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="heart-outline" size={responsiveStyles.favoriteIcon.size} color="#FF6B6B" />
                     </TouchableOpacity>
                   </View>
 
                   {/* Time Badge */}
-                  <View style={styles.timeBadge}>
-                    <Ionicons name="time-outline" size={14} color="#FFF" />
-                    <Text style={styles.timeText}>{recipe.cookTime}</Text>
+                  <View style={responsiveStyles.timeBadge}>
+                    <Ionicons name="time-outline" size={responsiveStyles.timeIcon.size} color="#FFF" />
+                    <Text style={responsiveStyles.timeText}>{recipe.cookTime}</Text>
                   </View>
                 </View>
 
                 {/* Content Section */}
-                <YStack style={styles.contentSection} space="$2">
+                <YStack style={responsiveStyles.contentSection} space={isSmallScreen ? "$1.5" : "$2"}>
                   {/* Header */}
                   <YStack space="$1">
-                    <Text style={styles.recipeTitle} numberOfLines={2}>{recipe.title}</Text>
-                    <Text style={styles.chefName}>by {recipe.chef}</Text>
+                    <Text style={responsiveStyles.recipeTitle} numberOfLines={2}>{recipe.title}</Text>
+                    <Text style={responsiveStyles.chefName}>by {recipe.chef}</Text>
                   </YStack>
 
                   {/* Description */}
-                  <Text style={styles.recipeDescription} numberOfLines={3}>{recipe.description}</Text>
+                  <Text style={responsiveStyles.recipeDescription} numberOfLines={isSmallScreen ? 2 : 3}>
+                    {recipe.description}
+                  </Text>
 
                   {/* Tags */}
-                  <XStack style={styles.tagsContainer} space="$2">
-                    {recipe.tags.slice(0, 2).map((tag, index) => (
-                      <View key={index} style={styles.tag}>
-                        <Text style={styles.tagText}>{tag}</Text>
+                  <XStack style={responsiveStyles.tagsContainer} space={isSmallScreen ? "$1" : "$2"}>
+                    {recipe.tags.slice(0, isSmallScreen ? 1 : 2).map((tag, index) => (
+                      <View key={index} style={responsiveStyles.tag}>
+                        <Text style={responsiveStyles.tagText}>{tag}</Text>
                       </View>
                     ))}
+                    {recipe.tags.length > (isSmallScreen ? 1 : 2) && (
+                      <View style={[responsiveStyles.tag, { backgroundColor: '#F5F5F5' }]}>
+                        <Text style={[responsiveStyles.tagText, { color: '#666' }]}>
+                          +{recipe.tags.length - (isSmallScreen ? 1 : 2)}
+                        </Text>
+                      </View>
+                    )}
                   </XStack>
 
                   {/* Stats Row */}
-                  <YStack space="$2" style={styles.statsSection}>
-                    {/* Top row - Rating and Calories */}
+                  <YStack space={isSmallScreen ? "$1.5" : "$2"} style={responsiveStyles.statsSection}>
                     <XStack justifyContent="space-between" alignItems="center">
                       {/* Rating */}
                       <XStack alignItems="center" space="$1">
                         <XStack space="$0.5">
                           {renderStars(recipe.rating)}
                         </XStack>
-                        <Text style={styles.ratingText}>{recipe.rating}</Text>
+                        <Text style={responsiveStyles.ratingText}>{recipe.rating}</Text>
                       </XStack>
 
                       {/* Calories */}
                       <XStack alignItems="center" space="$1">
-                        <MaterialCommunityIcons name="fire" size={16} color="#E74C3C" />
-                        <Text style={styles.caloriesText}>{recipe.calories}</Text>
+                        <MaterialCommunityIcons 
+                          name="fire" 
+                          size={responsiveStyles.fireIcon.size} 
+                          color="#E74C3C" 
+                        />
+                        <Text style={responsiveStyles.caloriesText}>{recipe.calories}</Text>
                       </XStack>
                     </XStack>
-
-                   
                   </YStack>
                 </YStack>
               </YStack>
@@ -172,144 +401,5 @@ const RecipeSuggestionCards = ({ recipes, onRecipePress }) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 20,
-    marginTop: 20,
-  },
-  scrollContainer: {
-    paddingHorizontal: 20,
-    paddingRight: 40, // Extra padding for the last item
-  },
-  recipeCard: {
-    backgroundColor: '#FFF',
-    overflow: 'hidden',
-    width: 350,
-    marginRight: 40,
-    marginLeft: -20,
-    marginBottom: 20,
-  },
-  lastCard: {
-    marginRight: 0,
-  },
-  imageContainer: {
-    position: 'relative',
-    height: 180,
-  },
-  recipeImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  overlayBadges: {
-    position: 'absolute',
-    top: 15,
-    left: 15,
-    right: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  difficultyBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  difficultyText: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  favoriteButton: {
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    borderRadius: 20,
-    padding: 8,
-  },
-  timeBadge: {
-    position: 'absolute',
-    bottom: 15,
-    right: 15,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  timeText: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  contentSection: {
-    padding: 16,
-  },
-  recipeTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2D2419',
-    lineHeight: 24,
-  },
-  chefName: {
-    fontSize: 13,
-    color: '#8B7355',
-    fontWeight: '500',
-  },
-  recipeDescription: {
-    fontSize: 13,
-    color: '#666',
-    lineHeight: 18,
-  },
-  tagsContainer: {
-    flexWrap: 'wrap',
-  },
-  tag: {
-    backgroundColor: '#F0F8F0',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E8F5E8',
-  },
-  tagText: {
-    fontSize: 11,
-    color: '#27AE60',
-    fontWeight: '500',
-  },
-  statsSection: {
-    marginTop: 4,
-  },
-  ratingText: {
-    fontSize: 13,
-    color: '#333',
-    fontWeight: '600',
-  },
-  caloriesText: {
-    fontSize: 13,
-    color: '#666',
-    fontWeight: '500',
-  },
-  servingsText: {
-    fontSize: 13,
-    color: '#666',
-    fontWeight: '500',
-  },
-  cookButton: {
-    backgroundColor: '#27AE60',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  cookButtonText: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-});
 
 export default RecipeSuggestionCards;
