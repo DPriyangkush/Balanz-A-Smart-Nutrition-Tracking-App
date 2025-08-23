@@ -13,9 +13,14 @@ import MealCardsList from '../components/MealCardsList';
 import RecipeSuggestionCards from 'components/RecipeSuggestionCards';
 import MealCategoryGrid from '../components/MealCategoryGrid';
 import RandomQuoteCard from 'Cards/RandomQuoteCard';
+import RecipeDetailModal from '../components/RecipeDetailsModal'; // Import the modal
 
 const MealScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Modal state
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
   
   // Get screen dimensions for responsive design
   const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -46,6 +51,8 @@ const MealScreen = () => {
       calories: '450 - 650 cal',
       prepTime: '15-20 Min',
       imageUri: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=200&h=150&fit=crop',
+      rating: 4.8,
+      difficulty: 'Easy',
     },
     {
       id: 2,
@@ -53,6 +60,8 @@ const MealScreen = () => {
       calories: '380 - 580 cal',
       prepTime: '10-15 Min',
       imageUri: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=200&h=150&fit=crop',
+      rating: 4.6,
+      difficulty: 'Medium',
     },
     {
       id: 3,
@@ -60,8 +69,40 @@ const MealScreen = () => {
       calories: '320 - 450 cal',
       prepTime: '5-10 Min',
       imageUri: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=200&h=150&fit=crop',
+      rating: 4.9,
+      difficulty: 'Easy',
     },
   ];
+
+  // Modal handlers
+  const handleRecipePress = (recipe) => {
+    console.log('Recipe pressed:', recipe);
+    setSelectedRecipe(recipe);
+    setModalVisible(true);
+  };
+
+  const handleMealPress = (meal) => {
+    console.log('Meal pressed:', meal);
+    // Transform meal data to recipe format for consistency
+    const recipeData = {
+      id: meal.id,
+      title: meal.mealName,
+      imageUri: meal.imageUri,
+      calories: meal.calories,
+      cookTime: meal.prepTime,
+      prepTime: meal.prepTime,
+      rating: meal.rating,
+      difficulty: meal.difficulty || 'Medium',
+      chef: 'Chef Nutrition',
+    };
+    setSelectedRecipe(recipeData);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedRecipe(null);
+  };
 
   // Dynamic styles based on screen size
   const responsiveStyles = StyleSheet.create({
@@ -168,7 +209,7 @@ const MealScreen = () => {
             <View style={responsiveStyles.foggyWrapper}>
               <MealCardsList
                 meals={mealPlans}
-                onMealPress={(meal) => console.log('Meal pressed:', meal.mealName)}
+                onMealPress={handleMealPress} // Updated handler
               />
 
               {/* Left gradient - smooth fade */}
@@ -216,7 +257,7 @@ const MealScreen = () => {
               onArrowPress={() => console.log('Recipe suggestions section pressed')}
             />
             <View style={responsiveStyles.foggyWrapper}>
-              <RecipeSuggestionCards onRecipePress={(r) => console.log('Recipe pressed:', r.title)} />
+              <RecipeSuggestionCards onRecipePress={handleRecipePress} /> {/* Updated handler */}
               
               {/* Left gradient - smooth fade */}
               <LinearGradient
@@ -258,6 +299,13 @@ const MealScreen = () => {
           {/* Bottom Spacer */}
           <YStack style={responsiveStyles.spacer} />
         </ScrollView>
+
+        {/* Recipe Detail Modal */}
+        <RecipeDetailModal
+          visible={modalVisible}
+          recipe={selectedRecipe}
+          onClose={closeModal}
+        />
       </SafeAreaView>
     </MealWrapper>
   );
