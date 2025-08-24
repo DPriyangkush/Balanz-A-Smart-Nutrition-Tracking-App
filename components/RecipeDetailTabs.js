@@ -1,4 +1,4 @@
-// RecipeDetailTabs.js
+// RecipeDetailTabs.js - Updated version
 import React, { useState, useRef, useEffect } from "react";
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -9,8 +9,9 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 
-const RecipeDetailTabs = ({ onTabChange }) => {
+const RecipeDetailTabs = ({ onTabChange, isVisible }) => { // Add isVisible prop
   const [activeTab, setActiveTab] = useState(0);
+  const [hasMeasured, setHasMeasured] = useState(false);
   const containerRef = useRef(null);
   const tabRefs = useRef([]);
 
@@ -32,16 +33,34 @@ const RecipeDetailTabs = ({ onTabChange }) => {
             duration: 300,
             easing: Easing.out(Easing.ease),
           });
+          setHasMeasured(true);
         },
-        () => console.log("Measurement failed")
+        () => {
+          console.log("Measurement failed, retrying...");
+          // Retry measurement if it fails
+          setTimeout(() => updatePillPosition(index), 100);
+        }
       );
     }
   };
 
   useEffect(() => {
-    // Wait a tick for layout
-    setTimeout(() => updatePillPosition(activeTab), 50);
-  }, []);
+    if (isVisible && !hasMeasured) {
+      // Wait for modal to be fully visible before measuring
+      const timer = setTimeout(() => {
+        updatePillPosition(activeTab);
+      }, 300); // Match modal animation duration
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, activeTab, hasMeasured]);
+
+  useEffect(() => {
+    // Reset measurement state when modal closes
+    if (!isVisible) {
+      setHasMeasured(false);
+    }
+  }, [isVisible]);
 
   const handlePress = (index) => {
     setActiveTab(index);
@@ -59,14 +78,16 @@ const RecipeDetailTabs = ({ onTabChange }) => {
   return (
     <View style={styles.wrapper}>
       <View ref={containerRef} style={styles.tabsContainer}>
-        <Animated.View style={[styles.pill, animatedPillStyle]}>
-          <LinearGradient
-            colors={["#FF8A50", "#FF6B35"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.gradient}
-          />
-        </Animated.View>
+        {hasMeasured && ( // Only render pill after measurement
+          <Animated.View style={[styles.pill, animatedPillStyle]}>
+            <LinearGradient
+              colors={["#FF8A50", "#FF6B35"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.gradient}
+            />
+          </Animated.View>
+        )}
 
         {tabs.map((tab, index) => (
           <TouchableOpacity
@@ -91,6 +112,8 @@ const RecipeDetailTabs = ({ onTabChange }) => {
   );
 };
 
+// ... keep the same styles
+
 const styles = StyleSheet.create({
   wrapper: {
     alignItems: "center",
@@ -104,6 +127,7 @@ const styles = StyleSheet.create({
     padding: 4,
     position: "relative",
     overflow: "hidden",
+    
   },
   tabItem: {
     paddingVertical: 10,

@@ -9,7 +9,11 @@ const MealSearchInput = ({
   placeholder = "Find your healthy meal...", 
   onChangeText, 
   value,
-  onMenuPress 
+  onMenuPress,
+  onSubmitEditing,
+  onBackPress,
+  showBackButton = false,
+  autoFocus = false
 }) => {
   // Responsive breakpoints
   const isSmallScreen = screenWidth < 375;
@@ -138,6 +142,13 @@ const MealSearchInput = ({
     return placeholder;
   };
 
+  // Handle search icon press or search submission
+  const handleSearchAction = () => {
+    if (onSubmitEditing) {
+      onSubmitEditing();
+    }
+  };
+
   // Create dynamic styles
   const responsiveStyles = StyleSheet.create({
     searchContainer: {
@@ -174,7 +185,7 @@ const MealSearchInput = ({
       // Adjust padding for different screen sizes
       paddingVertical: isSmallScreen ? 8 : isMediumScreen ? 12 : 16,
     },
-    menuButton: {
+    actionButton: {
       backgroundColor: 'rgba(255, 255, 255, 0.85)',
       borderRadius: borderRadius,
       paddingHorizontal: menuButtonPadding.horizontal,
@@ -191,13 +202,16 @@ const MealSearchInput = ({
       // iOS liquid glass effects
       backdropFilter: 'blur(20px)',
       overflow: 'hidden',
-      // Ensure square aspect ratio for menu button
+      // Ensure square aspect ratio for buttons
       aspectRatio: 1,
       justifyContent: 'center',
       alignItems: 'center',
       // Minimum touch target
       minWidth: isSmallScreen ? 44 : isMediumScreen ? 48 : 52,
       minHeight: isSmallScreen ? 44 : isMediumScreen ? 48 : 52,
+    },
+    searchIconButton: {
+      marginRight: isSmallScreen ? -4 : -6,
     },
   });
 
@@ -207,17 +221,45 @@ const MealSearchInput = ({
       space={getContainerGap()} 
       alignItems="center"
     >
+      {/* Back Button (conditionally rendered) */}
+      {showBackButton && (
+        <TouchableOpacity 
+          style={responsiveStyles.actionButton}
+          onPress={onBackPress}
+          activeOpacity={0.8}
+          accessibilityLabel="Go back"
+          accessibilityHint="Tap to go back to the previous screen"
+          accessibilityRole="button"
+        >
+          <Ionicons 
+            name="arrow-back" 
+            size={iconSize} 
+            color="#333" 
+          />
+        </TouchableOpacity>
+      )}
+
       <XStack 
         style={responsiveStyles.searchInputContainer} 
         flex={1} 
         alignItems="center"
       >
-        <Ionicons 
-          name="search" 
-          size={iconSize} 
-          color="#666" 
-          style={responsiveStyles.searchIcon} 
-        />
+        {/* Search Icon - now clickable */}
+        <TouchableOpacity 
+          onPress={handleSearchAction}
+          style={responsiveStyles.searchIconButton}
+          accessibilityLabel="Perform search"
+          accessibilityHint="Tap to search for meals"
+          accessibilityRole="button"
+        >
+          <Ionicons 
+            name="search" 
+            size={iconSize} 
+            color="#666" 
+            style={responsiveStyles.searchIcon} 
+          />
+        </TouchableOpacity>
+        
         <Input
           flex={1}
           placeholder={getResponsivePlaceholder()}
@@ -229,7 +271,9 @@ const MealSearchInput = ({
           color="#333"
           value={value}
           onChangeText={onChangeText}
+          onSubmitEditing={handleSearchAction}
           style={responsiveStyles.inputStyle}
+          autoFocus={autoFocus}
           // Accessibility improvements
           accessibilityLabel="Search for meals"
           accessibilityHint="Enter keywords to find healthy meals"
@@ -241,20 +285,23 @@ const MealSearchInput = ({
         />
       </XStack>
 
-      <TouchableOpacity 
-        style={responsiveStyles.menuButton}
-        onPress={onMenuPress}
-        activeOpacity={0.8}
-        accessibilityLabel="Open menu"
-        accessibilityHint="Tap to open the main menu"
-        accessibilityRole="button"
-      >
-        <Ionicons 
-          name="menu" 
-          size={iconSize} 
-          color="#333" 
-        />
-      </TouchableOpacity>
+      {/* Menu Button (only show when not in search mode) */}
+      {!showBackButton && (
+        <TouchableOpacity 
+          style={responsiveStyles.actionButton}
+          onPress={onMenuPress}
+          activeOpacity={0.8}
+          accessibilityLabel="Open menu"
+          accessibilityHint="Tap to open the main menu"
+          accessibilityRole="button"
+        >
+          <Ionicons 
+            name="menu" 
+            size={iconSize} 
+            color="#333" 
+          />
+        </TouchableOpacity>
+      )}
     </XStack>
   );
 };

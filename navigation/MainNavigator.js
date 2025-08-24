@@ -26,6 +26,7 @@ import ProgressScreen from "../screens/ProgressScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import MealScreen from "../screens/MealScreen";
 import AIScreen from "../screens/AIScreen";
+import MealSearchScreen from "../screens/MealSearchScreen"; // Add the new search screen
 
 // Components
 import BottomNav from "../components/BottomNav";
@@ -258,6 +259,56 @@ const MainNavigator = () => {
               animation: "reveal_from_bottom"
             }}
           />
+          
+          {/* Add MealSearchScreen with custom transition */}
+          <Stack.Screen
+            name="MealSearchScreen"
+            component={MealSearchScreen}
+            options={{
+              headerShown: false,
+              gestureEnabled: true,
+              // Custom slide-up animation from bottom
+              cardStyleInterpolator: ({ current, layouts }) => {
+                return {
+                  cardStyle: {
+                    transform: [
+                      {
+                        translateY: current.progress.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [layouts.screen.height * 0.5, 0],
+                        }),
+                      },
+                    ],
+                    opacity: current.progress.interpolate({
+                      inputRange: [0, 0.3, 1],
+                      outputRange: [0, 0.7, 1],
+                    }),
+                  },
+                };
+              },
+              // Custom timing for smooth transition
+              transitionSpec: {
+                open: {
+                  animation: 'timing',
+                  config: {
+                    duration: 400,
+                    useNativeDriver: true,
+                  },
+                },
+                close: {
+                  animation: 'timing',
+                  config: {
+                    duration: 350,
+                    useNativeDriver: true,
+                  },
+                },
+              },
+              // Gesture configuration for smooth back swipe
+              gestureResponseDistance: 150,
+              gestureVelocityImpact: 0.3,
+            }}
+          />
+          
           <Stack.Screen
             name="Details"
             component={Details}

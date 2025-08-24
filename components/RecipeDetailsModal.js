@@ -12,6 +12,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
@@ -24,6 +25,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import LogButton from './LogButton'; // Import the LogButton component
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const INITIAL_HEIGHT = screenHeight * 0.6; // 60% of screen height
@@ -116,7 +118,7 @@ const RecipeDetailTabs = ({ onTabChange }) => {
 };
 
 // Main Modal Component with enhanced animations
-const RecipeDetailModal = ({ visible, recipe, onClose }) => {
+const RecipeDetailModal = ({ visible, recipe, onClose, onLogProgress }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [isClosing, setIsClosing] = useState(false);
   
@@ -208,6 +210,14 @@ const RecipeDetailModal = ({ visible, recipe, onClose }) => {
       onClose();
       setIsClosing(false);
     }, 300);
+  };
+
+  const handleLogProgress = () => {
+    if (onLogProgress) {
+      onLogProgress(recipe);
+    } else {
+      console.log('Log progress for recipe:', recipe?.title || recipe?.mealName);
+    }
   };
 
   const modalAnimatedStyle = useAnimatedStyle(() => {
@@ -303,22 +313,49 @@ const RecipeDetailModal = ({ visible, recipe, onClose }) => {
             style={styles.stepContainer}
             entering={FadeIn.duration(400).delay(index * 100)}
           >
-            <View style={styles.stepHeader}>
-              <Animated.View 
-                style={styles.stepNumber}
-                entering={FadeIn.duration(400).delay(index * 100 + 100)}
+            <BlurView 
+              intensity={25} 
+              style={styles.glassBackground}
+              tint="extraLight"
+            >
+              <LinearGradient
+                colors={[
+                  'rgba(255, 255, 255, 0.4)',
+                  'rgba(255, 255, 255, 0.2)',
+                  'rgba(255, 255, 255, 0.1)'
+                ]}
+                locations={[0, 0.6, 1]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.glassGradient}
               >
-                <Text style={styles.stepNumberText}>{step.step || index + 1}</Text>
-              </Animated.View>
-              <View style={styles.stepInfo}>
-                <Text style={styles.stepTitle}>{step.title || 'Step'}</Text>
-                <View style={styles.timeContainer}>
-                  <Ionicons name="time-outline" size={14} color="#FF8A50" />
-                  <Text style={styles.timeText}>{step.time || 'N/A'}</Text>
+                <View style={styles.stepContent}>
+                  <View style={styles.stepHeader}>
+                    <Animated.View 
+                      style={styles.stepNumber}
+                      entering={FadeIn.duration(400).delay(index * 100 + 100)}
+                    >
+                      <LinearGradient
+                        colors={['#FF8A50', '#FF6B35']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.stepNumberGradient}
+                      >
+                        <Text style={styles.stepNumberText}>{step.step || index + 1}</Text>
+                      </LinearGradient>
+                    </Animated.View>
+                    <View style={styles.stepInfo}>
+                      <Text style={styles.stepTitle}>{step.title || 'Step'}</Text>
+                      <View style={styles.timeContainer}>
+                        <Ionicons name="time-outline" size={14} color="#FF8A50" />
+                        <Text style={styles.timeText}>{step.time || 'N/A'}</Text>
+                      </View>
+                    </View>
+                  </View>
+                  <Text style={styles.stepDescription}>{step.description || 'No description available'}</Text>
                 </View>
-              </View>
-            </View>
-            <Text style={styles.stepDescription}>{step.description || 'No description available'}</Text>
+              </LinearGradient>
+            </BlurView>
           </Animated.View>
         ))}
       </Animated.View>
@@ -400,6 +437,14 @@ const RecipeDetailModal = ({ visible, recipe, onClose }) => {
         />
         
         <AnimatedView style={[styles.modalContainer, modalAnimatedStyle, contentAnimatedStyle]}>
+          {/* Background gradient for the entire modal */}
+          <LinearGradient
+            colors={['#FFF8E8', '#F5F0E1', '#EDE4D3']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.modalBackgroundGradient}
+          />
+          
           {/* Drag handle indicator - Only this area will handle pan gestures */}
           <GestureDetector gesture={panGesture}>
             <View style={styles.dragHandle}>
@@ -497,11 +542,28 @@ const RecipeDetailModal = ({ visible, recipe, onClose }) => {
                   </Text>
                 </AnimatedView>
               </View>
+
+              {/* Header Log Button */}
+              <AnimatedView 
+                style={styles.headerLogButton}
+                entering={FadeIn.duration(500).delay(700)}
+              >
+                <LogButton
+                  title="Log This Meal"
+                  subtitle="Mark as completed?"
+                  icon="checkmark-circle"
+                  onPress={handleLogProgress}
+                  variant="success"
+                  size="small"
+                  style={styles.headerLogButtonStyle}
+                  gradientColors={['#10B981', '#059669', '#047857']}
+                />
+              </AnimatedView>
             </AnimatedView>
           </View>
 
           {/* Tabs */}
-          <RecipeDetailTabs onTabChange={setActiveTab} />
+          <RecipeDetailTabs onTabChange={setActiveTab} isVisible={visible && !isClosing} />
 
           {/* Tab Content - Now scrollable */}
           <View style={styles.contentContainer}>
@@ -526,6 +588,8 @@ const tabStyles = StyleSheet.create({
     padding: 4,
     position: "relative",
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(96, 96, 96, 0.9)"
   },
   tabItem: {
     paddingVertical: 10,
@@ -539,7 +603,7 @@ const tabStyles = StyleSheet.create({
   tabText: {
     color: "#666",
     fontWeight: "500",
-    fontSize: 14,
+    fontSize: 16,
   },
   activeTabText: {
     color: "#fff",
@@ -571,17 +635,28 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFF8E8',
+    backgroundColor: 'transparent',
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
     overflow: 'hidden',
   },
+  modalBackgroundGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+  },
+  
   dragHandle: {
     width: '100%',
     alignItems: 'center',
-    paddingVertical: 15,
+    paddingVertical: 12,
     paddingTop: 12,
     backgroundColor: 'rgba(0,0,0,0.05)',
+    zIndex: 1,
   },
   dragHandleBar: {
     width: 50,
@@ -590,7 +665,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   modalHeader: {
-    height: 200,
+    height: 250, // Increased height to accommodate the header log button
     position: 'relative',
   },
   headerImage: {
@@ -602,7 +677,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: '60%',
+    height: '70%', // Increased to accommodate the button
   },
   closeButton: {
     position: 'absolute',
@@ -642,6 +717,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 8,
+    marginBottom: 12,
   },
   statItem: {
     flexDirection: 'row',
@@ -669,82 +745,149 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
+  headerLogButton: {
+    marginTop: 8,
+  },
+  headerLogButtonStyle: {
+    width: '100%',
+  },
   
-  // Content Container - NEW
+  // Content Container with gradient background
   contentContainer: {
     flex: 1,
-    backgroundColor: '#FFF8E8',
+    backgroundColor: 'transparent',
   },
   
   tabContent: {
     flex: 1,
-    backgroundColor: '#FFF8E8',
+    backgroundColor: 'transparent',
   },
   
-  // NEW - Scroll content style for proper padding
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 50, // Add bottom padding for better scroll experience
+    paddingBottom: 20,
   },
   
-  // Guidance Styles
+  // Enhanced Glass Effect Guidance Styles
   guidanceContainer: {
     padding: 20,
+    backgroundColor: 'transparent',
   },
+  
   stepContainer: {
     marginBottom: 24,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 20,
+    overflow: 'hidden',
+    // Enhanced shadow for depth
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,
+    backgroundColor: "white"
   },
+  
+  glassBackground: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    // Glass border effect
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  
+  glassGradient: {
+    borderRadius: 20,
+    // Enhanced glass effect with better opacity
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  
+  stepContent: {
+    padding: 18,
+    // Ensure content is properly positioned over glass effect
+    backgroundColor: 'transparent',
+  },
+  
   stepHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: 12,
   },
+  
   stepNumber: {
-    backgroundColor: '#FF8A50',
-    borderRadius: 20,
-    width: 32,
-    height: 32,
+    borderRadius: 18,
+    width: 36,
+    height: 36,
+    marginRight: 14,
+    overflow: 'hidden',
+    // Enhanced shadow for the step number
+    shadowColor: '#FF8A50',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  
+  stepNumberGradient: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    borderRadius: 18,
   },
+  
   stepNumberText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
+  
   stepInfo: {
     flex: 1,
   },
+  
   stepTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#2D2419',
-    marginBottom: 4,
+    marginBottom: 6,
+    // Enhanced text shadow for better readability on glass
+    textShadowColor: 'rgba(255, 255, 255, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
   },
+  
   timeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
+    backgroundColor: 'rgba(255, 138, 80, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 138, 80, 0.2)',
   },
+  
   timeText: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#FF8A50',
-    fontWeight: '500',
+    fontWeight: '600',
   },
+  
   stepDescription: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-    marginLeft: 44,
+    fontSize: 15,
+    color: '#4A4A4A',
+    lineHeight: 22,
+    marginLeft: 50,
+    fontWeight: '400',
+    // Enhanced text readability
+    textShadowColor: 'rgba(255, 255, 255, 0.6)',
+    textShadowOffset: { width: 0, height: 0.5 },
+    textShadowRadius: 0.5,
   },
 
   // Ingredients Styles
@@ -791,5 +934,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-
 export default RecipeDetailModal;
