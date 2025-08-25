@@ -88,6 +88,22 @@ export const ProfileWrapper = ({ children, ...props }) => {
   );
 };
 
+export const BreakfastWrapper = ({ children, ...props }) => {
+  return (
+    <StretchyHeader
+      title="Breakfast"
+      gradientColors={['#FFA726', '#FF7043', '#FF5722']}
+      blurIntensity={100}
+      headerHeight={90}
+      {...props}
+    >
+      <View style={styles.contentWrapper}>
+        {children}
+      </View>
+    </StretchyHeader>
+  );
+};
+
 const styles = StyleSheet.create({
   contentWrapper: {
     flex: 1,

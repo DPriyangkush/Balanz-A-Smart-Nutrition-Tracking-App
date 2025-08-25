@@ -2,6 +2,7 @@ import React from 'react';
 import { TouchableOpacity, StyleSheet, View, Dimensions } from 'react-native';
 import { Card, XStack, YStack, Text } from 'tamagui';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 const MealCategoryGrid = ({ onCategoryPress }) => {
   const mealCategories = [
@@ -39,8 +40,11 @@ const MealCategoryGrid = ({ onCategoryPress }) => {
     },
   ];
 
+  const navigation = useNavigation();
+
   const handleCategoryPress = (category) => {
     if (onCategoryPress) {
+      navigation.navigate("Breakfast");
       onCategoryPress(category);
     }
   };

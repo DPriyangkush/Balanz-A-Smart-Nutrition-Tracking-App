@@ -119,7 +119,7 @@ const MealCardsList = ({ meals, onMealPress }) => {
         paddingRight: getContentPaddingRight() + 8,
       }),
       // Ensure proper spacing between cards
-      gap: isSmallScreen ? 12 : isMediumScreen ? 10 : 20,
+      gap: isSmallScreen ? 12 : isMediumScreen ? 0 : 20,
     },
   });
 

@@ -27,6 +27,7 @@ import ProfileScreen from "../screens/ProfileScreen";
 import MealScreen from "../screens/MealScreen";
 import AIScreen from "../screens/AIScreen";
 import MealSearchScreen from "../screens/MealSearchScreen"; // Add the new search screen
+import BreakfastScreen from "screens/BreakfastScreen";
 
 // Components
 import BottomNav from "../components/BottomNav";
@@ -54,6 +55,7 @@ const AppTabs = ({ navigation, route }) => {
           <Tab.Screen name="AI" component={AIScreen} />
           <Tab.Screen name="Progress" component={ProgressScreen} />
           <Tab.Screen name="Profile" component={ProfileScreen} />
+          
         </Tab.Navigator>
       </View>
     </View>
@@ -264,6 +266,54 @@ const MainNavigator = () => {
           <Stack.Screen
             name="MealSearchScreen"
             component={MealSearchScreen}
+            options={{
+              headerShown: false,
+              gestureEnabled: true,
+              // Custom slide-up animation from bottom
+              cardStyleInterpolator: ({ current, layouts }) => {
+                return {
+                  cardStyle: {
+                    transform: [
+                      {
+                        translateY: current.progress.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [layouts.screen.height * 0.5, 0],
+                        }),
+                      },
+                    ],
+                    opacity: current.progress.interpolate({
+                      inputRange: [0, 0.3, 1],
+                      outputRange: [0, 0.7, 1],
+                    }),
+                  },
+                };
+              },
+              // Custom timing for smooth transition
+              transitionSpec: {
+                open: {
+                  animation: 'timing',
+                  config: {
+                    duration: 400,
+                    useNativeDriver: true,
+                  },
+                },
+                close: {
+                  animation: 'timing',
+                  config: {
+                    duration: 350,
+                    useNativeDriver: true,
+                  },
+                },
+              },
+              // Gesture configuration for smooth back swipe
+              gestureResponseDistance: 150,
+              gestureVelocityImpact: 0.3,
+            }}
+          />
+
+          <Stack.Screen
+            name="Breakfast"
+            component={BreakfastScreen}
             options={{
               headerShown: false,
               gestureEnabled: true,
