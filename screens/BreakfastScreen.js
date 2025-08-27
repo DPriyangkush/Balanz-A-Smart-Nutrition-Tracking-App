@@ -53,7 +53,9 @@ const BreakfastScreen = () => {
             <SafeAreaView style={styles.container}>
                 <StatusBar barStyle="dark-content" />
                 <View style={styles.SearchContainer}>
-                    <MealSearchInput />
+                    <TouchableOpacity>
+                        
+                    </TouchableOpacity>
                 </View>
             </SafeAreaView>
         </BreakfastWrapper>

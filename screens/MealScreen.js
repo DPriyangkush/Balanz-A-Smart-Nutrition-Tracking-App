@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { 
-  ScrollView, 
-  StyleSheet, 
-  SafeAreaView, 
-  StatusBar, 
-  View, 
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import {
+  ScrollView,
+  StyleSheet,
+  SafeAreaView,
+  StatusBar,
+  View,
   Dimensions,
   Animated,
   Text,
@@ -12,11 +12,15 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   BackHandler,
-  Keyboard
+  Keyboard,
+  InteractionManager,
 } from 'react-native';
 import { YStack } from 'tamagui';
 import { MealWrapper } from '../components/ScreenWrappers';
 import { LinearGradient } from 'expo-linear-gradient';
+
+// Import the service layer instead of local data
+import { MealService } from '../src/services/MealService';
 
 // Import custom components
 import GreetingSection from '../components/GreetingSection';
@@ -34,81 +38,70 @@ const MealScreen = ({ navigation }) => {
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
-  
+  const [searchError, setSearchError] = useState(null);
+
   // Modal state
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
-  
-  // Enhanced animation references with better initial values
-  const greetingAnimation = useRef(new Animated.Value(1)).current;
-  const searchContainerAnimation = useRef(new Animated.Value(0)).current; // For search container positioning
-  const contentAnimation = useRef(new Animated.Value(1)).current;
-  const searchResultsAnimation = useRef(new Animated.Value(0)).current;
-  const backgroundAnimation = useRef(new Animated.Value(0)).current; // For background transition
-  
-  // Ref to measure greeting section height
+
+  // Animation values (keeping existing animation logic)
+  const greetingOpacity = useRef(new Animated.Value(1)).current;
+  const greetingTranslateY = useRef(new Animated.Value(0)).current;
+  const greetingScale = useRef(new Animated.Value(1)).current;
+  const searchContainerTranslateY = useRef(new Animated.Value(0)).current;
+  const contentOpacity = useRef(new Animated.Value(1)).current;
+  const contentTranslateY = useRef(new Animated.Value(0)).current;
+  const contentScale = useRef(new Animated.Value(1)).current;
+  const searchResultsOpacity = useRef(new Animated.Value(0)).current;
+  const searchResultsTranslateY = useRef(new Animated.Value(40)).current;
+  const searchResultsScale = useRef(new Animated.Value(0.95)).current;
+  const backgroundColorAnim = useRef(new Animated.Value(0)).current;
+  const resultCardAnimations = useRef([]).current;
+
+  // Layout measurements
   const greetingRef = useRef(null);
   const [greetingHeight, setGreetingHeight] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Performance: Memoize screen dimensions
+  const { width: screenWidth, height: screenHeight } = useMemo(() =>
+    Dimensions.get('window'), []
+  );
+
+  // Responsive calculations - memoized for performance
+  const responsiveConfig = useMemo(() => {
+    const isTablet = screenWidth >= 768;
+    const isLargeScreen = screenWidth >= 1024;
+
+    return {
+      isTablet,
+      isLargeScreen,
+      horizontalPadding: Math.min(Math.max(screenWidth * 0.04, 16), 24),
+      sectionSpacing: Math.min(Math.max(screenWidth * 0.03, 16), 24),
+      gradientWidth: Math.min(Math.max(screenWidth * 0.08, 30), 60),
+    };
+  }, [screenWidth]);
 
   // Measure the height of the GreetingSection component
-  const onGreetingLayout = (event) => {
+  const onGreetingLayout = useCallback((event) => {
     const { height } = event.nativeEvent.layout;
     if (height > 0 && greetingHeight === 0) {
       setGreetingHeight(height);
+      setIsInitialized(true);
     }
-  };
+  }, [greetingHeight]);
 
-  // Initialize back handler for Android
-  useEffect(() => {
-    const backAction = () => {
-      if (isSearchMode) {
-        exitSearchMode();
-        return true;
-      }
-      return false;
-    };
-
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction,
-    );
-
-    return () => backHandler.remove();
-  }, [isSearchMode]);
-
-  // Navigation focus effect
-  useEffect(() => {
-    const unsubscribe = navigation?.addListener?.('focus', () => {
-      if (isSearchMode) {
-        resetToMainScreen();
-      }
-    });
-
-    return unsubscribe;
-  }, [navigation, isSearchMode]);
-
-  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-  
-  // Responsive calculations
-  const isTablet = screenWidth >= 768;
-  const isLargeScreen = screenWidth >= 1024;
-  
-  // Dynamic padding and spacing
-  const horizontalPadding = Math.min(Math.max(screenWidth * 0.04, 16), 24);
-  const sectionSpacing = Math.min(Math.max(screenWidth * 0.03, 16), 24);
-  const gradientWidth = Math.min(Math.max(screenWidth * 0.08, 30), 60);
-
-  // Sample data (keeping your existing data)
-  const nutritionCategories = [
+  // Performance: Memoize static data
+  const nutritionCategories = useMemo(() => [
     { id: 1, name: 'Protein', emoji: '🥩' },
     { id: 2, name: 'Carbs', emoji: '🍞' },
     { id: 3, name: 'Vitamins', emoji: '🥬' },
     { id: 4, name: 'Fiber', emoji: '🥕' },
     { id: 5, name: 'Calcium', emoji: '🥛' },
     { id: 6, name: 'Healthy Fats', emoji: '🥑' },
-  ];
+  ], []);
 
-  const mealPlans = [
+  const mealPlans = useMemo(() => [
     {
       id: 1,
       mealName: 'High Protein Bowl',
@@ -136,191 +129,428 @@ const MealScreen = ({ navigation }) => {
       rating: 4.9,
       difficulty: 'Easy',
     },
-  ];
+  ], []);
 
-  const sampleSearchResults = [
-    {
-      id: 1,
-      mealName: 'Grilled Chicken Salad',
-      calories: '350 cal',
-      prepTime: '15 min',
-      imageUri: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=200&h=150&fit=crop',
-      rating: 4.7,
-      tags: ['protein', 'low-carb', 'healthy']
-    },
-    {
-      id: 2,
-      mealName: 'Quinoa Buddha Bowl',
-      calories: '420 cal',
-      prepTime: '20 min',
-      imageUri: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=200&h=150&fit=crop',
-      rating: 4.8,
-      tags: ['vegan', 'protein', 'fiber']
-    },
-    {
-      id: 3,
-      mealName: 'Salmon Teriyaki',
-      calories: '480 cal',
-      prepTime: '25 min',
-      imageUri: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=200&h=150&fit=crop',
-      rating: 4.6,
-      tags: ['omega-3', 'protein', 'japanese']
-    },
-  ];
+  // Initialize result card animations
+  const initializeResultCardAnimations = useCallback((count) => {
+    resultCardAnimations.length = 0;
+    for (let i = 0; i < count; i++) {
+      resultCardAnimations.push({
+        translateY: new Animated.Value(50),
+        opacity: new Animated.Value(0),
+        scale: new Animated.Value(0.9),
+      });
+    }
+  }, [resultCardAnimations]);
 
-  // Enhanced search functionality
-  const performSearch = async (query) => {
+  // Animate result cards with spring physics
+  const animateResultCards = useCallback((results) => {
+    initializeResultCardAnimations(results.length);
+
+    // Stagger the animations for a professional cascading effect
+    results.forEach((_, index) => {
+      const delay = index * 80; // 80ms stagger
+
+      setTimeout(() => {
+        Animated.parallel([
+          Animated.spring(resultCardAnimations[index].translateY, {
+            toValue: 0,
+            tension: 120,
+            friction: 8,
+            useNativeDriver: true,
+          }),
+          Animated.spring(resultCardAnimations[index].opacity, {
+            toValue: 1,
+            tension: 120,
+            friction: 8,
+            useNativeDriver: true,
+          }),
+          Animated.spring(resultCardAnimations[index].scale, {
+            toValue: 1,
+            tension: 120,
+            friction: 8,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }, delay);
+    });
+  }, [initializeResultCardAnimations, resultCardAnimations]);
+
+  // Enhanced search functionality using service layer
+  const performSearch = useCallback(async (query) => {
     if (!query.trim()) {
       exitSearchMode();
       return;
     }
 
     setIsSearching(true);
-    
-    setTimeout(() => {
-      const filteredResults = sampleSearchResults.filter(meal =>
-        meal.mealName.toLowerCase().includes(query.toLowerCase()) ||
-        meal.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
-      );
-      setSearchResults(filteredResults);
-      setIsSearching(false);
-    }, 600);
-  };
+    setSearchError(null);
 
-  // Enhanced enter search mode with smooth animations
-  const enterSearchMode = () => {
+    try {
+      // Use InteractionManager for better performance
+      InteractionManager.runAfterInteractions(async () => {
+        try {
+          // Use the service layer instead of local data
+          const filteredResults = await MealService.searchMeals(query);
+
+          // Set results and stop loading
+          setSearchResults(filteredResults);
+          setIsSearching(false);
+
+          // Animation for results
+          if (filteredResults.length > 0) {
+            setTimeout(() => {
+              animateResultCards(filteredResults);
+            }, 50);
+          }
+        } catch (error) {
+          console.error('Search error:', error);
+          setSearchError('Failed to search meals. Please try again.');
+          setSearchResults([]);
+          setIsSearching(false);
+        }
+      });
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchError('Failed to search meals. Please try again.');
+      setSearchResults([]);
+      setIsSearching(false);
+    }
+  }, [animateResultCards, exitSearchMode]);
+
+  // Professional enter search mode with enhanced animations
+  const enterSearchMode = useCallback(() => {
+    if (!isInitialized) return;
+
     setIsSearchMode(true);
-    
-    // Create a smooth, coordinated animation sequence
+
+    // Professional timing configuration
+    const fastDuration = 200;
+    const mediumDuration = 350;
+
+    // Phase 1: Quick fade out of greeting and content
     Animated.parallel([
-      // Fade out greeting section quickly
-      Animated.timing(greetingAnimation, {
+      // Greeting animations - all native driver
+      Animated.timing(greetingOpacity, {
         toValue: 0,
-        duration: 200,
+        duration: fastDuration,
         useNativeDriver: true,
       }),
-      // Move search container up smoothly to top
-      Animated.timing(searchContainerAnimation, {
-        toValue: 1,
-        duration: 450,
-        useNativeDriver: true, // Back to native driver for transform only
+      Animated.timing(greetingTranslateY, {
+        toValue: -10,
+        duration: fastDuration,
+        useNativeDriver: true,
       }),
-      // Fade out main content with slight delay
-      Animated.timing(contentAnimation, {
+      Animated.timing(greetingScale, {
+        toValue: 0.95,
+        duration: fastDuration,
+        useNativeDriver: true,
+      }),
+      // Content animations - all native driver
+      Animated.timing(contentOpacity, {
         toValue: 0,
-        duration: 350,
+        duration: mediumDuration,
         delay: 50,
         useNativeDriver: true,
       }),
-      // Background transition for better visual feedback
-      Animated.timing(backgroundAnimation, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: false,
-      }),
-    ]).start(() => {
-      // After animations complete, fade in search results
-      Animated.timing(searchResultsAnimation, {
-        toValue: 1,
-        duration: 300,
+      Animated.timing(contentTranslateY, {
+        toValue: 30,
+        duration: mediumDuration,
+        delay: 50,
         useNativeDriver: true,
-      }).start();
-    });
-  };
+      }),
+      Animated.timing(contentScale, {
+        toValue: 0.98,
+        duration: mediumDuration,
+        delay: 50,
+        useNativeDriver: true,
+      }),
+    ]).start();
 
-  // Enhanced exit search mode with smooth reverse animations
-  const exitSearchMode = () => {
-    Keyboard.dismiss();
-    // First, fade out search results
-    Animated.timing(searchResultsAnimation, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => {
-      // Then animate everything back to normal state
+    // Phase 2: Move search container and background transition
+    setTimeout(() => {
       Animated.parallel([
-        // Move search container back down from top
-        Animated.timing(searchContainerAnimation, {
-          toValue: 0,
-          duration: 450,
-          useNativeDriver: true, // Back to native driver for transform only
-        }),
-        // Fade in main content
-        Animated.timing(contentAnimation, {
-          toValue: 1,
-          duration: 400,
-          delay: 100,
+        // Search container movement - native driver
+        Animated.spring(searchContainerTranslateY, {
+          toValue: -greetingHeight,
+          tension: 100,
+          friction: 8,
           useNativeDriver: true,
         }),
-        // Fade in greeting section
-        Animated.timing(greetingAnimation, {
+        // Background color - non-native driver
+        Animated.timing(backgroundColorAnim, {
           toValue: 1,
-          duration: 350,
-          delay: 150,
-          useNativeDriver: true,
-        }),
-        // Reset background
-        Animated.timing(backgroundAnimation, {
-          toValue: 0,
-          duration: 400,
+          duration: mediumDuration,
           useNativeDriver: false,
         }),
       ]).start(() => {
-        // Clean up state after animations complete
-        setIsSearchMode(false);
-        setSearchResults([]);
-        setSearchQuery('');
+        // Phase 3: Fade in search results
+        Animated.parallel([
+          Animated.timing(searchResultsOpacity, {
+            toValue: 1,
+            duration: 250,
+            useNativeDriver: true,
+          }),
+          Animated.timing(searchResultsTranslateY, {
+            toValue: 0,
+            duration: 250,
+            useNativeDriver: true,
+          }),
+          Animated.timing(searchResultsScale, {
+            toValue: 1,
+            duration: 250,
+            useNativeDriver: true,
+          }),
+        ]).start();
       });
+    }, fastDuration);
+  }, [
+    isInitialized,
+    greetingHeight,
+    greetingOpacity,
+    greetingTranslateY,
+    greetingScale,
+    contentOpacity,
+    contentTranslateY,
+    contentScale,
+    searchContainerTranslateY,
+    backgroundColorAnim,
+    searchResultsOpacity,
+    searchResultsTranslateY,
+    searchResultsScale,
+  ]);
+
+  // Professional exit search mode with smooth reverse animations
+  const exitSearchMode = useCallback(() => {
+    Keyboard.dismiss();
+
+    const fastDuration = 200;
+    const mediumDuration = 350;
+
+    // Phase 1: Fade out search results
+    Animated.parallel([
+      Animated.timing(searchResultsOpacity, {
+        toValue: 0,
+        duration: fastDuration,
+        useNativeDriver: true,
+      }),
+      Animated.timing(searchResultsTranslateY, {
+        toValue: 40,
+        duration: fastDuration,
+        useNativeDriver: true,
+      }),
+      Animated.timing(searchResultsScale, {
+        toValue: 0.95,
+        duration: fastDuration,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // Phase 2: Move search container back and background transition
+      Animated.parallel([
+        Animated.spring(searchContainerTranslateY, {
+          toValue: 0,
+          tension: 100,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+        Animated.timing(backgroundColorAnim, {
+          toValue: 0,
+          duration: mediumDuration,
+          useNativeDriver: false,
+        }),
+      ]).start();
+
+      // Phase 3: Fade in main content and greeting (staggered)
+      setTimeout(() => {
+        Animated.parallel([
+          // Content animations
+          Animated.spring(contentOpacity, {
+            toValue: 1,
+            tension: 100,
+            friction: 8,
+            delay: 50,
+            useNativeDriver: true,
+          }),
+          Animated.spring(contentTranslateY, {
+            toValue: 0,
+            tension: 100,
+            friction: 8,
+            delay: 50,
+            useNativeDriver: true,
+          }),
+          Animated.spring(contentScale, {
+            toValue: 1,
+            tension: 100,
+            friction: 8,
+            delay: 50,
+            useNativeDriver: true,
+          }),
+          // Greeting animations
+          Animated.spring(greetingOpacity, {
+            toValue: 1,
+            tension: 100,
+            friction: 8,
+            delay: 100,
+            useNativeDriver: true,
+          }),
+          Animated.spring(greetingTranslateY, {
+            toValue: 0,
+            tension: 100,
+            friction: 8,
+            delay: 100,
+            useNativeDriver: true,
+          }),
+          Animated.spring(greetingScale, {
+            toValue: 1,
+            tension: 100,
+            friction: 8,
+            delay: 100,
+            useNativeDriver: true,
+          }),
+        ]).start(() => {
+          // Clean up state after animations complete
+          setIsSearchMode(false);
+          setSearchResults([]);
+          setSearchQuery('');
+          setSearchError(null);
+
+          // Reset result card animations
+          resultCardAnimations.forEach(anim => {
+            anim.translateY.setValue(50);
+            anim.opacity.setValue(0);
+            anim.scale.setValue(0.9);
+          });
+        });
+      }, fastDuration);
     });
-  };
+  }, [
+    searchResultsOpacity,
+    searchResultsTranslateY,
+    searchResultsScale,
+    searchContainerTranslateY,
+    backgroundColorAnim,
+    contentOpacity,
+    contentTranslateY,
+    contentScale,
+    greetingOpacity,
+    greetingTranslateY,
+    greetingScale,
+    resultCardAnimations,
+  ]);
 
   // Reset to main screen without animation (for navigation focus)
-  const resetToMainScreen = () => {
+  const resetToMainScreen = useCallback(() => {
     setIsSearchMode(false);
     setSearchQuery('');
     setSearchResults([]);
-    
+    setSearchError(null);
+
     // Reset all animations instantly
-    greetingAnimation.setValue(1);
-    searchContainerAnimation.setValue(0);
-    contentAnimation.setValue(1);
-    searchResultsAnimation.setValue(0);
-    backgroundAnimation.setValue(0);
-  };
+    greetingOpacity.setValue(1);
+    greetingTranslateY.setValue(0);
+    greetingScale.setValue(1);
+    searchContainerTranslateY.setValue(0);
+    contentOpacity.setValue(1);
+    contentTranslateY.setValue(0);
+    contentScale.setValue(1);
+    searchResultsOpacity.setValue(0);
+    searchResultsTranslateY.setValue(40);
+    searchResultsScale.setValue(0.95);
+    backgroundColorAnim.setValue(0);
+
+    // Reset result card animations
+    resultCardAnimations.forEach(anim => {
+      anim.translateY.setValue(50);
+      anim.opacity.setValue(0);
+      anim.scale.setValue(0.9);
+    });
+  }, [
+    greetingOpacity,
+    greetingTranslateY,
+    greetingScale,
+    searchContainerTranslateY,
+    contentOpacity,
+    contentTranslateY,
+    contentScale,
+    searchResultsOpacity,
+    searchResultsTranslateY,
+    searchResultsScale,
+    backgroundColorAnim,
+    resultCardAnimations,
+  ]);
+
+  // Initialize back handler for Android
+  useEffect(() => {
+    const backAction = () => {
+      if (isSearchMode) {
+        exitSearchMode();
+        return true;
+      }
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, [isSearchMode, exitSearchMode]);
+
+  // Navigation focus effect
+  useEffect(() => {
+    const unsubscribe = navigation?.addListener?.('focus', () => {
+      if (isSearchMode) {
+        resetToMainScreen();
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, isSearchMode, resetToMainScreen]);
 
   // Handle search input submission
-  const handleSearchSubmit = () => {
+  const handleSearchSubmit = useCallback(() => {
     if (searchQuery.trim()) {
       if (!isSearchMode) {
         enterSearchMode();
       }
       performSearch(searchQuery);
     }
-  };
+  }, [searchQuery, isSearchMode, enterSearchMode, performSearch]);
 
   // Handle search text change with improved logic
-  const handleSearchChange = (text) => {
+  const handleSearchChange = useCallback((text) => {
     setSearchQuery(text);
-    
-    // If user clears the search completely, exit search mode
-    if (!text.trim() && isSearchMode) {
+
+    // If user types something and we're not in search mode, enter it
+    if (text.trim() && !isSearchMode) {
+      enterSearchMode();
+      // Perform search after entering search mode
+      setTimeout(() => {
+        performSearch(text);
+      }, 300); // Wait for search mode animations
+    } else if (text.trim() && isSearchMode) {
+      // If already in search mode, search immediately
+      performSearch(text);
+    } else if (!text.trim() && isSearchMode) {
+      // If user clears the search completely, exit search mode
       exitSearchMode();
     }
-  };
+  }, [isSearchMode, exitSearchMode, enterSearchMode, performSearch]);
 
   // Handle back press in search mode
-  const handleSearchBack = () => {
+  const handleSearchBack = useCallback(() => {
     exitSearchMode();
-  };
+  }, [exitSearchMode]);
 
-  // Modal handlers (keeping your existing logic)
-  const handleRecipePress = (recipe) => {
+  // Modal handlers
+  const handleRecipePress = useCallback((recipe) => {
     console.log('Recipe pressed:', recipe);
     setSelectedRecipe(recipe);
     setModalVisible(true);
-  };
+  }, []);
 
-  const handleMealPress = (meal) => {
+  const handleMealPress = useCallback((meal) => {
     console.log('Meal pressed:', meal);
     const recipeData = {
       id: meal.id,
@@ -335,147 +565,155 @@ const MealScreen = ({ navigation }) => {
     };
     setSelectedRecipe(recipeData);
     setModalVisible(true);
-  };
+  }, []);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setModalVisible(false);
     setSelectedRecipe(null);
-  };
+  }, []);
 
-  // Search result renderers (keeping your existing implementations)
-  const renderSearchResult = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.resultCard}
-      onPress={() => handleMealPress(item)}
-      activeOpacity={0.8}
-    >
-      <View style={styles.resultImageContainer}>
-        <View style={[styles.resultImagePlaceholder, { backgroundColor: '#E8F4FD' }]} />
-      </View>
-      <View style={styles.resultInfo}>
-        <Text style={styles.resultTitle}>{item.mealName}</Text>
-        <Text style={styles.resultMeta}>{item.calories} • {item.prepTime}</Text>
-        <View style={styles.tagsContainer}>
-          {item.tags.slice(0, 2).map((tag, tagIndex) => (
-            <View key={tagIndex} style={styles.tag}>
-              <Text style={styles.tagText}>{tag}</Text>
+  // Enhanced search result renderer with spring animations
+  const renderSearchResult = useCallback(({ item, index }) => {
+    const cardAnimation = resultCardAnimations[index] || {
+      translateY: new Animated.Value(50),
+      opacity: new Animated.Value(0),
+      scale: new Animated.Value(0.9),
+    };
+
+    return (
+      <Animated.View
+        style={[
+          styles.resultCard,
+          {
+            transform: [
+              { translateY: cardAnimation.translateY },
+              { scale: cardAnimation.scale },
+            ],
+            opacity: cardAnimation.opacity,
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.resultCardContent}
+          onPress={() => handleMealPress(item)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.resultImageContainer}>
+            <View style={[styles.resultImagePlaceholder, { backgroundColor: '#E8F4FD' }]} />
+          </View>
+          <View style={styles.resultInfo}>
+            <Text style={styles.resultTitle}>{item.mealName}</Text>
+            <Text style={styles.resultMeta}>{item.calories} • {item.prepTime}</Text>
+            <View style={styles.tagsContainer}>
+              {item.tags.slice(0, 2).map((tag, tagIndex) => (
+                <View key={tagIndex} style={styles.tag}>
+                  <Text style={styles.tagText}>{tag}</Text>
+                </View>
+              ))}
             </View>
-          ))}
-        </View>
-        <Text style={styles.rating}>⭐ {item.rating}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+            <Text style={styles.rating}>⭐ {item.rating}</Text>
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  }, [resultCardAnimations, handleMealPress]);
 
-  const renderSearchEmptyState = () => (
+  const renderSearchEmptyState = useCallback(() => (
     <View style={styles.emptyState}>
       <Text style={styles.emptyStateEmoji}>🔍</Text>
       <Text style={styles.emptyStateTitle}>
         {searchQuery ? 'No meals found' : 'Start searching for meals'}
       </Text>
       <Text style={styles.emptyStateSubtitle}>
-        {searchQuery 
-          ? 'Try different keywords or browse our categories' 
+        {searchQuery
+          ? 'Try different keywords or browse our categories'
           : 'Type in the search box above to find delicious meals'
         }
       </Text>
     </View>
-  );
+  ), [searchQuery]);
 
-  const renderSearchLoadingState = () => (
+  const renderSearchLoadingState = useCallback(() => (
     <View style={styles.loadingSpinnerContainer}>
-      <ActivityIndicator 
-        size="large" 
-        color="#FF6B35" 
+      <ActivityIndicator
+        size="large"
+        color="#FF6B35"
         style={styles.loadingSpinner}
       />
       <Text style={styles.loadingText}>Searching for meals...</Text>
     </View>
-  );
+  ), []);
 
-  // Enhanced dynamic styles with smooth animations
-  const responsiveStyles = StyleSheet.create({
+  const renderSearchErrorState = useCallback(() => (
+    <View style={styles.errorState}>
+      <Text style={styles.errorEmoji}>⚠️</Text>
+      <Text style={styles.errorTitle}>Oops! Something went wrong</Text>
+      <Text style={styles.errorMessage}>{searchError}</Text>
+      <TouchableOpacity
+        style={styles.retryButton}
+        onPress={() => performSearch(searchQuery)}
+      >
+        <Text style={styles.retryButtonText}>Try Again</Text>
+      </TouchableOpacity>
+    </View>
+  ), [searchError, searchQuery, performSearch]);
+
+  // Memoize dynamic styles for performance
+  const responsiveStyles = useMemo(() => StyleSheet.create({
     content: {
       flex: 1,
-      paddingHorizontal: horizontalPadding,
-      paddingTop: isTablet ? 20 : 10,
-      maxWidth: isLargeScreen ? 1200 : '100%',
+      paddingHorizontal: responsiveConfig.horizontalPadding,
+      paddingTop: responsiveConfig.isTablet ? 20 : 10,
+      maxWidth: responsiveConfig.isLargeScreen ? 1200 : '100%',
       alignSelf: 'center',
     },
-    // Enhanced search container with smooth positioning to top
     searchContainer: {
       paddingTop: 5,
       paddingBottom: 5,
-      transform: [{
-        translateY: searchContainerAnimation.interpolate({
-          inputRange: [0, 1],
-          // Dynamically calculate the vertical movement based on greetingHeight
-          outputRange: [0, -greetingHeight], 
-          
-        })
-      }],
-      zIndex: 20, // Increased zIndex to ensure it stays on top of everything
+      transform: [{ translateY: searchContainerTranslateY }],
+      zIndex: isSearchMode ? 1000 : 20,
+      elevation: isSearchMode ? 1000 : 20,
     },
-    // Enhanced greeting section animation
     greetingSection: {
-      opacity: greetingAnimation,
-      transform: [{
-        translateY: greetingAnimation.interpolate({
-          inputRange: [0, 1],
-          outputRange: [-10, 0],
-        })
-      }, {
-        scale: greetingAnimation.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.95, 1],
-        })
-      }],
+      opacity: greetingOpacity,
+      transform: [
+        { translateY: greetingTranslateY },
+        { scale: greetingScale }
+      ],
+      pointerEvents: isSearchMode ? 'none' : 'auto',
+      zIndex: isSearchMode ? -1 : 1,
     },
-    // Enhanced main content animation
     mainContent: {
       flex: 1,
-      transform: [{
-        translateY: contentAnimation.interpolate({
-          inputRange: [0, 1],
-          outputRange: [30, 0],
-        })
-      }, {
-        scale: contentAnimation.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.98, 1],
-        })
-      }],
-      opacity: contentAnimation,
+      opacity: contentOpacity,
+      transform: [
+        { translateY: contentTranslateY },
+        { scale: contentScale }
+      ],
+      pointerEvents: isSearchMode ? 'none' : 'auto',
+      zIndex: isSearchMode ? -1 : 1,
     },
-    // Enhanced search results animation with proper positioning
     searchResults: {
       position: 'absolute',
-      // Offset the search results to start just below the search bar
-      top: 100, 
-      left: horizontalPadding,
-      right: horizontalPadding,
+      top: 70,
+      left: responsiveConfig.horizontalPadding,
+      right: responsiveConfig.horizontalPadding,
       bottom: 0,
-      transform: [{
-        translateY: searchResultsAnimation.interpolate({
-          inputRange: [0, 1],
-          outputRange: [40, 0],
-        })
-      }, {
-        scale: searchResultsAnimation.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.95, 1],
-        })
-      }],
-      opacity: searchResultsAnimation,
-      zIndex: 10, // Lower zIndex than search container
-      // Add pointerEvents to control touch handling
+      maxHeight: screenHeight * 0.7, // Add max height instead
+      opacity: searchResultsOpacity,
+      transform: [
+        { translateY: searchResultsTranslateY },
+        { scale: searchResultsScale }
+      ],
+      zIndex: isSearchMode ? 100 : -1,
+      elevation: isSearchMode ? 100 : -1,
       pointerEvents: isSearchMode ? 'auto' : 'none',
     },
     mealPlanSection: {
-      marginBottom: sectionSpacing * 0.5,
+      marginBottom: responsiveConfig.sectionSpacing * 0.5,
     },
     nutritionTrackingSection: {
-      marginBottom: sectionSpacing,
+      marginBottom: responsiveConfig.sectionSpacing,
     },
     spacer: {
       height: Math.min(Math.max(screenHeight * 0.08, 60), 120),
@@ -484,36 +722,47 @@ const MealScreen = ({ navigation }) => {
       position: 'absolute',
       top: 0,
       bottom: 0,
-      width: gradientWidth,
+      width: responsiveConfig.gradientWidth,
       zIndex: 2,
     },
     foggyWrapper: {
       position: 'relative',
-      marginHorizontal: isTablet ? 0 : -horizontalPadding * 0.5,
+      marginHorizontal: responsiveConfig.isTablet ? 0 : -responsiveConfig.horizontalPadding * 0.5,
     },
-  });
+  }), [
+    responsiveConfig,
+    searchContainerTranslateY,
+    isSearchMode,
+    greetingOpacity,
+    greetingTranslateY,
+    greetingScale,
+    contentOpacity,
+    contentTranslateY,
+    contentScale,
+    searchResultsOpacity,
+    searchResultsTranslateY,
+    searchResultsScale,
+    screenHeight,
+  ]);
 
-  // Enhanced background color animation
-  const animatedBackgroundColor = backgroundAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['#FFF8E8', '#FFF8E8'], // Subtle background change during search
-  });
+  // Enhanced background color animation - using only static colors to avoid conflicts
+  const animatedBackgroundStyle = useMemo(() => ({
+    backgroundColor: '#FFF8E8', // Static color to avoid animation conflicts
+  }), []);
 
   return (
     <MealWrapper>
-      <Animated.View style={[styles.container, { backgroundColor: animatedBackgroundColor }]}>
+      <View style={[styles.container, animatedBackgroundStyle]}>
         <SafeAreaView style={styles.safeArea}>
           <StatusBar barStyle="dark-content" />
 
           <View style={responsiveStyles.content}>
-            {/* Enhanced Search Container with smooth animations */}
+            {/* Enhanced Search Container */}
             <Animated.View style={responsiveStyles.searchContainer}>
-              {/* Greeting Section with enhanced animation */}
-              <Animated.View 
+              {/* Greeting Section */}
+              <Animated.View
                 style={responsiveStyles.greetingSection}
-                // Use onLayout to get the dynamic height
                 onLayout={onGreetingLayout}
-                pointerEvents={isSearchMode ? 'none' : 'auto'} // Disable touch when hidden
               >
                 <GreetingSection
                   userName="Priyangkush"
@@ -521,6 +770,7 @@ const MealScreen = ({ navigation }) => {
                 />
               </Animated.View>
 
+              {/* Search Input */}
               <MealSearchInput
                 placeholder="Find your healthy meal..."
                 value={searchQuery}
@@ -530,19 +780,18 @@ const MealScreen = ({ navigation }) => {
                 onBackPress={handleSearchBack}
                 onMenuPress={() => console.log('Menu pressed')}
                 autoFocus={false}
-                
               />
             </Animated.View>
 
-            {/* Enhanced Main Content with smooth animations */}
-            <Animated.View 
-              style={responsiveStyles.mainContent}
-              pointerEvents={isSearchMode ? 'none' : 'auto'} // Disable touch in search mode
-            >
-              <ScrollView 
+            {/* Main Content */}
+            <Animated.View style={responsiveStyles.mainContent}>
+              <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
                 scrollEventThrottle={16}
+                removeClippedSubviews={true}
+                maxToRenderPerBatch={5}
+                windowSize={10}
               >
                 {/* Nutrition Categories */}
                 <View style={responsiveStyles.foggyWrapper}>
@@ -639,7 +888,7 @@ const MealScreen = ({ navigation }) => {
                   />
                   <View style={responsiveStyles.foggyWrapper}>
                     <RecipeSuggestionCards onRecipePress={handleRecipePress} />
-                    
+
                     <LinearGradient
                       colors={[
                         '#FFF8E8',
@@ -680,19 +929,27 @@ const MealScreen = ({ navigation }) => {
               </ScrollView>
             </Animated.View>
 
-            {/* Enhanced Search Results with smooth animations */}
+            {/* Search Results with spring animations */}
             <Animated.View style={responsiveStyles.searchResults}>
-              {isSearching ? (
+              {searchError ? (
+                renderSearchErrorState()
+              ) : isSearching ? (
                 renderSearchLoadingState()
               ) : searchResults.length > 0 ? (
-                <FlatList
-                  data={searchResults}
-                  renderItem={renderSearchResult}
-                  keyExtractor={(item) => item.id.toString()}
+                <ScrollView
                   showsVerticalScrollIndicator={false}
                   contentContainerStyle={styles.resultsContainer}
-                  ItemSeparatorComponent={() => <View style={styles.separator} />}
-                />
+                  scrollEventThrottle={16}
+                  removeClippedSubviews={true}
+                  style={styles.resultsScrollView}
+                >
+                  {searchResults.map((item, index) => (
+                    <View key={item.id.toString()}>
+                      {renderSearchResult({ item, index })}
+                      {index < searchResults.length - 1 && <View style={styles.separator} />}
+                    </View>
+                  ))}
+                </ScrollView>
               ) : (
                 renderSearchEmptyState()
               )}
@@ -706,7 +963,7 @@ const MealScreen = ({ navigation }) => {
             onClose={closeModal}
           />
         </SafeAreaView>
-      </Animated.View>
+      </View>
     </MealWrapper>
   );
 };
@@ -735,28 +992,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
   },
-  // Search result styles (keeping your existing styles)
+  // Enhanced search result styles with professional polish
   resultsContainer: {
     paddingBottom: 80,
+    paddingTop: 20,
   },
-  resultCard: {
+  resultCardContent: {
     flexDirection: 'row',
     backgroundColor: 'white',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
-    marginBottom: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 4,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.05)',
   },
   resultImageContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
+    width: 110,
+    height: 110,
+    borderRadius: 15,
     overflow: 'hidden',
     marginRight: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+    alignSelf: "center"
   },
   resultImagePlaceholder: {
     width: '100%',
@@ -772,12 +1037,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
     marginBottom: 4,
+    lineHeight: 22,
   },
   resultMeta: {
     fontSize: 14,
     color: '#666',
     marginBottom: 8,
+    fontWeight: '500',
   },
+  // ADD this new style to the main styles object:
+resultsScrollView: {
+  flexGrow: 0, // Don't expand to fill available space
+  maxHeight: '100%', // But allow scrolling if needed
+},
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -790,6 +1062,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginRight: 6,
     marginBottom: 4,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,102,204,0.1)',
   },
   tagText: {
     fontSize: 12,
@@ -799,12 +1073,13 @@ const styles = StyleSheet.create({
   rating: {
     fontSize: 14,
     color: '#FF6B35',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   separator: {
     height: 1,
     backgroundColor: '#F0F0F0',
     marginVertical: 8,
+    marginHorizontal: 16,
   },
   emptyState: {
     flex: 1,
@@ -823,6 +1098,7 @@ const styles = StyleSheet.create({
     color: '#333',
     textAlign: 'center',
     marginBottom: 8,
+    lineHeight: 26,
   },
   emptyStateSubtitle: {
     fontSize: 16,
@@ -844,6 +1120,45 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginTop: 8,
+    fontWeight: '500',
+  },
+  // Error state styles
+  errorState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    paddingTop: 80,
+  },
+  errorEmoji: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 8,
+    lineHeight: 26,
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: '#FF6B35',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
