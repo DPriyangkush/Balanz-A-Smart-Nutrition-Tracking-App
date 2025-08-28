@@ -1,5 +1,5 @@
-// BreakfastScreen.js
-import React from "react";
+// BreakfastScreen.js - Optimized without layout changes
+import React, { memo, useMemo } from "react";
 import {
     View,
     Text,
@@ -11,64 +11,38 @@ import {
     StatusBar,
 } from "react-native";
 import { BreakfastWrapper } from "components/ScreenWrappers";
-import MealSearchInput from "components/MealSearchInput";
+import SunriseScene from "animatedScenes/SunriseScene";
 
-const breakfastData = [
-    {
-        id: "1",
-        name: "Pancakes",
-        description: "Fluffy pancakes with maple syrup",
-        image:
-            "https://images.unsplash.com/photo-1604908177225-2a50e7e8f3c8?w=800&q=80",
-    },
-    {
-        id: "2",
-        name: "Omelette",
-        description: "Classic 3-egg omelette with veggies",
-        image:
-            "https://images.unsplash.com/photo-1585735513060-7d290d31f273?w=800&q=80",
-    },
-    {
-        id: "3",
-        name: "Smoothie Bowl",
-        description: "Fresh fruits with granola and chia seeds",
-        image:
-            "https://images.unsplash.com/photo-1506084868230-bb9d95c24759?w=800&q=80",
-    },
-];
-
-const BreakfastScreen = () => {
-    const renderItem = ({ item }) => (
-        <TouchableOpacity style={styles.card}>
-            <Image source={{ uri: item.image }} style={styles.image} />
-            <View style={styles.info}>
-                <Text style={styles.title}>{item.name}</Text>
-                <Text style={styles.desc}>{item.description}</Text>
-            </View>
-        </TouchableOpacity>
-    );
+// Memoize the component to prevent unnecessary re-renders
+const BreakfastScreen = memo(() => {
+    // Memoize StatusBar props to prevent recreation
+    const statusBarProps = useMemo(() => ({
+        barStyle: "dark-content"
+    }), []);
 
     return (
         <BreakfastWrapper>
+            
             <SafeAreaView style={styles.container}>
-                <StatusBar barStyle="dark-content" />
-                <View style={styles.SearchContainer}>
-                    <TouchableOpacity>
-                        
-                    </TouchableOpacity>
-                </View>
+                <StatusBar {...statusBarProps} />
+                <SunriseScene/>
             </SafeAreaView>
         </BreakfastWrapper>
     );
-};
+});
+
+// Add display name for debugging
+BreakfastScreen.displayName = 'BreakfastScreen';
 
 export default BreakfastScreen;
 
+// Move styles outside component - they're created once and reused
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#FFF8E8",
+        backgroundColor: "#ffa246ff",
         paddingHorizontal: 16,
+        alignItems: "center"
     },
     SearchContainer: {
         paddingTop: 20,

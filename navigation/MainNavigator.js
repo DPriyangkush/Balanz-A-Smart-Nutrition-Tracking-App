@@ -1,134 +1,369 @@
-import React, { useEffect, useState, useRef } from "react";
-import { View, StyleSheet, ActivityIndicator } from "react-native";
-import { createStackNavigator } from "@react-navigation/stack";
+import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import { View, StyleSheet, ActivityIndicator, InteractionManager, UIManager, Platform } from "react-native";
+import { createStackNavigator, CardStyleInterpolators, TransitionPresets } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import useAuthStore from "../stores/authStore";
 
+// Enable LayoutAnimation for Android
+if (Platform.OS === 'android') {
+  if (UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+}
+
 // Import skeleton loaders
 import { AuthScreenSkeleton, HomeScreenSkeleton, GenericSkeleton } from "../components/SkeletonLoader";
 
-// Screens
-import SplashScreen from "../screens/SplashScreen";
-import Onboarding from "../OnboardingScreen";
-import AuthScreen from "../auth/AuthScreen";
-import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
-import VerifyOTPScreen from "../screens/VerifyOTPScreen";
-import PasswordCreationScreen from "../screens/PasswordCreationScreen";
-import PersonalInfoScreen from "../screens/PersonalInfoScreen";
-import GoalPreferenceScreen from "../screens/GoalPreferenceScreen";
-import DietPreferenceScreen from "../screens/DietPreferenceScreen";
-import DashboardScreen from "../screens/DashboardScreen";
-import Overview from "../screens/overview";
-import Details from "../screens/details";
-import ProgressScreen from "../screens/ProgressScreen";
-import ProfileScreen from "../screens/ProfileScreen";
-import MealScreen from "../screens/MealScreen";
-import AIScreen from "../screens/AIScreen";
-
-import BreakfastScreen from "screens/BreakfastScreen";
+// Screens - Lazy load for better performance
+const SplashScreen = React.lazy(() => import("../screens/SplashScreen"));
+const Onboarding = React.lazy(() => import("../OnboardingScreen"));
+const AuthScreen = React.lazy(() => import("../auth/AuthScreen"));
+const ForgotPasswordScreen = React.lazy(() => import("../screens/ForgotPasswordScreen"));
+const VerifyOTPScreen = React.lazy(() => import("../screens/VerifyOTPScreen"));
+const PasswordCreationScreen = React.lazy(() => import("../screens/PasswordCreationScreen"));
+const PersonalInfoScreen = React.lazy(() => import("../screens/PersonalInfoScreen"));
+const GoalPreferenceScreen = React.lazy(() => import("../screens/GoalPreferenceScreen"));
+const DietPreferenceScreen = React.lazy(() => import("../screens/DietPreferenceScreen"));
+const DashboardScreen = React.lazy(() => import("../screens/DashboardScreen"));
+const Overview = React.lazy(() => import("../screens/overview"));
+const Details = React.lazy(() => import("../screens/details"));
+const ProgressScreen = React.lazy(() => import("../screens/ProgressScreen"));
+const ProfileScreen = React.lazy(() => import("../screens/ProfileScreen"));
+const MealScreen = React.lazy(() => import("../screens/MealScreen"));
+const AIScreen = React.lazy(() => import("../screens/AIScreen"));
+const BreakfastScreen = React.lazy(() => import("screens/BreakfastScreen"));
 
 // Components
 import BottomNav from "../components/BottomNav";
 import FrostedHeader from "../components/FrostedHeader";
 import { BackButton } from "../components/BackButton";
 
+// Create navigators with optimized configurations
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const AppTabs = ({ navigation, route }) => {
+// PERFORMANCE OPTIMIZED TRANSITION CONFIGURATIONS
+const ULTRA_SMOOTH_TRANSITION = {
+  gestureEnabled: true,
+  gestureResponseDistance: 35,
+  gestureVelocityImpact: 0.2,
+  cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+  transitionSpec: {
+    open: {
+      animation: 'spring',
+      config: {
+        stiffness: 1000,
+        damping: 500,
+        mass: 3,
+        overshootClamping: true,
+        restDisplacementThreshold: 0.01,
+        restSpeedThreshold: 0.01,
+        useNativeDriver: true,
+      },
+    },
+    close: {
+      animation: 'spring',
+      config: {
+        stiffness: 1000,
+        damping: 500,
+        mass: 3,
+        overshootClamping: true,
+        restDisplacementThreshold: 0.01,
+        restSpeedThreshold: 0.01,
+        useNativeDriver: true,
+      },
+    },
+  },
+};
+
+const MODAL_SMOOTH_TRANSITION = {
+  ...TransitionPresets.ModalPresentationIOS,
+  gestureEnabled: true,
+  cardOverlayEnabled: true,
+  gestureResponseDistance: 400,
+  transitionSpec: {
+    open: {
+      animation: 'spring',
+      config: {
+        stiffness: 800,
+        damping: 40,
+        mass: 1,
+        useNativeDriver: true,
+      },
+    },
+    close: {
+      animation: 'spring',
+      config: {
+        stiffness: 800,
+        damping: 40,
+        mass: 1,
+        useNativeDriver: true,
+      },
+    },
+  },
+};
+
+const INSTANT_TRANSITION = {
+  cardStyleInterpolator: CardStyleInterpolators.forNoAnimation,
+  transitionSpec: {
+    open: { animation: 'timing', config: { duration: 0, useNativeDriver: true } },
+    close: { animation: 'timing', config: { duration: 0, useNativeDriver: true } },
+  },
+};
+
+// Optimized default screen options with native driver
+const DEFAULT_STACK_OPTIONS = {
+  headerShown: false,
+  cardStyle: { backgroundColor: 'transparent' },
+  presentation: 'card',
+  animationEnabled: true,
+  // Remove unnecessary properties that can cause performance issues
+  detachPreviousScreen: false, // Keep previous screen in memory for smooth back navigation
+  ...ULTRA_SMOOTH_TRANSITION,
+};
+
+const DEFAULT_TAB_OPTIONS = {
+  headerShown: false,
+  unmountOnBlur: false, // Keep tabs mounted for instant switching
+  lazy: false, // Disable lazy loading for instant tab switches
+  freezeOnBlur: false, // Don't freeze for better performance
+  // Add performance optimizations
+  tabBarHideOnKeyboard: Platform.OS === 'ios', // Only hide on iOS for better performance
+};
+
+// Pre-rendered components to avoid re-renders during navigation
+const MealStackNavigator = React.memo(() => {
+  const stackNavigator = useMemo(() => (
+    <Stack.Navigator 
+      screenOptions={{
+        ...DEFAULT_STACK_OPTIONS,
+        // Use faster transition for meal stack
+        cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+      }}
+      // Optimize for performance
+      initialRouteName="MealMain"
+      headerMode="none"
+    >
+      <Stack.Screen 
+        name="MealMain" 
+        component={MealScreen}
+        options={INSTANT_TRANSITION}
+      />
+      <Stack.Screen 
+        name="Breakfast" 
+        component={BreakfastScreen} 
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+          presentation: 'card',
+          gestureEnabled: true,
+          gestureDirection: 'vertical',
+          gestureResponseDistance: 50,
+          gestureVelocityImpact: 0.3,
+          transitionSpec: {
+            open: {
+              animation: 'spring',
+              config: {
+                stiffness: 1000,
+                damping: 500,
+                mass: 3,
+                overshootClamping: true,
+                restDisplacementThreshold: 0.01,
+                restSpeedThreshold: 0.01,
+                useNativeDriver: true,
+              },
+            },
+            close: {
+              animation: 'spring',
+              config: {
+                stiffness: 1000,
+                damping: 500,
+                mass: 3,
+                overshootClamping: true,
+                restDisplacementThreshold: 0.01,
+                restSpeedThreshold: 0.01,
+                useNativeDriver: true,
+              },
+            },
+          },
+        }}
+      />
+    </Stack.Navigator>
+  ), []);
+
+  return stackNavigator;
+});
+
+MealStackNavigator.displayName = 'MealStackNavigator';
+
+// Ultra-optimized AppTabs with performance enhancements
+const AppTabs = React.memo(({ navigation, route }) => {
+  // Pre-render bottom nav to avoid re-renders
+  const bottomNavComponent = useCallback((props) => <BottomNav {...props} />, []);
+  
+  const tabNavigator = useMemo(() => (
+    <Tab.Navigator
+      tabBar={bottomNavComponent}
+      screenOptions={{
+        ...DEFAULT_TAB_OPTIONS,
+        // Optimize tab bar performance
+        tabBarStyle: {
+          elevation: 0,
+          shadowOpacity: 0,
+          borderTopWidth: 0,
+          backgroundColor: '#ffffff',
+        },
+      }}
+      initialRouteName="Dashboard"
+      // Performance optimizations
+      sceneContainerStyle={{ backgroundColor: 'transparent' }}
+      screenListeners={{
+        // Optimize focus/blur events
+        focus: (e) => {
+          // Use InteractionManager for smooth transitions
+          InteractionManager.runAfterInteractions(() => {
+            // Any post-transition logic here
+          });
+        },
+      }}
+    >
+      <Tab.Screen 
+        name="Dashboard" 
+        component={DashboardScreen}
+        options={{
+          ...DEFAULT_TAB_OPTIONS,
+          unmountOnBlur: false, // Keep dashboard always mounted
+          freezeOnBlur: false,
+        }}
+      />
+      <Tab.Screen 
+        name="Meal" 
+        component={MealStackNavigator}
+        options={{
+          ...DEFAULT_TAB_OPTIONS,
+          unmountOnBlur: false, // Keep meal stack mounted
+        }}
+      />
+      <Tab.Screen 
+        name="AI" 
+        component={AIScreen}
+        options={DEFAULT_TAB_OPTIONS}
+      />
+      <Tab.Screen 
+        name="Progress" 
+        component={ProgressScreen}
+        options={DEFAULT_TAB_OPTIONS}
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={ProfileScreen}
+        options={DEFAULT_TAB_OPTIONS}
+      />
+    </Tab.Navigator>
+  ), [bottomNavComponent]);
+
   return (
     <View style={styles.appContainer}>
       <View style={styles.tabsWrapper}>
-        <Tab.Navigator
-          tabBar={(props) => <BottomNav {...props} />}
-          screenOptions={{
-            headerShown: false,
-            unmountOnBlur: false,
-            lazy: true,
-            lazyPreloadDistance: 0,
-          }}
-        >
-          <Tab.Screen name="Dashboard" component={DashboardScreen} />
-          <Tab.Screen name="Meal" component={MealScreen} />
-          <Tab.Screen name="AI" component={AIScreen} />
-          <Tab.Screen name="Progress" component={ProgressScreen} />
-          <Tab.Screen name="Profile" component={ProfileScreen} />
-          
-        </Tab.Navigator>
+        {tabNavigator}
       </View>
     </View>
   );
-};
+});
 
-// Replace LoadingScreen with contextual skeleton loaders
-const LoadingScreen = ({ context = "generic" }) => {
-  switch (context) {
-    case "auth":
-      return <AuthScreenSkeleton />;
-    case "dashboard":
-      return <HomeScreenSkeleton />;
-    case "onboarding":
-      return (
-        <GenericSkeleton>
-          <View style={styles.onboardingSkeleton}>
-            {/* Header skeleton */}
-            <View style={styles.skeletonHeader}>
-              <View style={[styles.skeletonBox, { width: 200, height: 28 }]} />
-              <View style={[styles.skeletonBox, { width: '80%', height: 16, marginTop: 12 }]} />
+AppTabs.displayName = 'AppTabs';
+
+// Optimized LoadingScreen with reduced re-renders
+const LoadingScreen = React.memo(({ context = "generic" }) => {
+  const skeletonContent = useMemo(() => {
+    switch (context) {
+      case "auth":
+        return <AuthScreenSkeleton />;
+      case "dashboard":
+        return <HomeScreenSkeleton />;
+      case "onboarding":
+        return (
+          <GenericSkeleton>
+            <View style={styles.onboardingSkeleton}>
+              <View style={styles.skeletonHeader}>
+                <View style={[styles.skeletonBox, { width: 200, height: 28 }]} />
+                <View style={[styles.skeletonBox, { width: '80%', height: 16, marginTop: 12 }]} />
+              </View>
+              <View style={styles.skeletonForm}>
+                <View style={[styles.skeletonBox, { width: '100%', height: 50, marginBottom: 20 }]} />
+                <View style={[styles.skeletonBox, { width: '100%', height: 50, marginBottom: 20 }]} />
+                <View style={[styles.skeletonBox, { width: '100%', height: 50, marginBottom: 30 }]} />
+                <View style={[styles.skeletonBox, { width: '100%', height: 50 }]} />
+              </View>
             </View>
-            
-            {/* Form fields skeleton */}
-            <View style={styles.skeletonForm}>
-              <View style={[styles.skeletonBox, { width: '100%', height: 50, marginBottom: 20 }]} />
-              <View style={[styles.skeletonBox, { width: '100%', height: 50, marginBottom: 20 }]} />
-              <View style={[styles.skeletonBox, { width: '100%', height: 50, marginBottom: 30 }]} />
-              <View style={[styles.skeletonBox, { width: '100%', height: 50 }]} />
+          </GenericSkeleton>
+        );
+      default:
+        return (
+          <GenericSkeleton>
+            <View style={styles.genericSkeleton}>
+              <View style={[styles.skeletonBox, { width: '60%', height: 24, marginBottom: 20 }]} />
+              <View style={[styles.skeletonBox, { width: '100%', height: 100, marginBottom: 20 }]} />
+              <View style={[styles.skeletonBox, { width: '80%', height: 16, marginBottom: 12 }]} />
+              <View style={[styles.skeletonBox, { width: '70%', height: 16, marginBottom: 12 }]} />
+              <View style={[styles.skeletonBox, { width: '90%', height: 16 }]} />
             </View>
-          </View>
-        </GenericSkeleton>
-      );
-    default:
-      return (
-        <GenericSkeleton>
-          <View style={styles.genericSkeleton}>
-            <View style={[styles.skeletonBox, { width: '60%', height: 24, marginBottom: 20 }]} />
-            <View style={[styles.skeletonBox, { width: '100%', height: 100, marginBottom: 20 }]} />
-            <View style={[styles.skeletonBox, { width: '80%', height: 16, marginBottom: 12 }]} />
-            <View style={[styles.skeletonBox, { width: '70%', height: 16, marginBottom: 12 }]} />
-            <View style={[styles.skeletonBox, { width: '90%', height: 16 }]} />
-          </View>
-        </GenericSkeleton>
-      );
-  }
-};
-
-// Wrapper components with user ID
-const createWrapperComponent = (Component) => (props) => {
-  const { user } = useAuthStore();
-  
-  if (!user?.uid) {
-    return <LoadingScreen context="onboarding" />;
-  }
-
-  const routeWithParams = {
-    ...props.route,
-    params: {
-      ...props.route?.params,
-      userId: user.uid
+          </GenericSkeleton>
+        );
     }
-  };
+  }, [context]);
 
-  return <Component {...props} route={routeWithParams} />;
+  return skeletonContent;
+});
+
+LoadingScreen.displayName = 'LoadingScreen';
+
+// Performance-optimized wrapper components
+const createWrapperComponent = (Component) => {
+  return React.memo((props) => {
+    const { user } = useAuthStore();
+    
+    // Memoize route params to prevent unnecessary re-renders
+    const routeWithParams = useMemo(() => {
+      if (!user?.uid) return props.route;
+      
+      return {
+        ...props.route,
+        params: {
+          ...props.route?.params,
+          userId: user.uid
+        }
+      };
+    }, [props.route, user?.uid]);
+
+    // Use InteractionManager for smoother loading
+    const [isReady, setIsReady] = useState(!!user?.uid);
+
+    useEffect(() => {
+      if (user?.uid && !isReady) {
+        InteractionManager.runAfterInteractions(() => {
+          setIsReady(true);
+        });
+      }
+    }, [user?.uid, isReady]);
+
+    if (!user?.uid || !isReady) {
+      return <LoadingScreen context="onboarding" />;
+    }
+
+    return <Component {...props} route={routeWithParams} />;
+  });
 };
 
+// Properly created wrapper components outside of useMemo
 const PersonalInfoWrapper = createWrapperComponent(PersonalInfoScreen);
 const GoalPreferenceWrapper = createWrapperComponent(GoalPreferenceScreen);
 const DietPreferenceWrapper = createWrapperComponent(DietPreferenceScreen);
 
+// Main Navigator with ultra-performance optimizations
 const MainNavigator = () => {
-  // App states
+  // App states with performance considerations
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
   const [appInitialized, setAppInitialized] = useState(false);
   
@@ -142,73 +377,242 @@ const MainNavigator = () => {
     isLoading, 
     isInitialized, 
     hasCompletedOnboarding,
-    isProfileLoaded, // New flag from store
+    isProfileLoaded,
     initializeAuthListener 
   } = useAuthStore();
 
   const isAuthenticated = !!user && !!user.uid;
 
+  // Optimized initialization with better performance
+  const initializeApp = useCallback(async () => {
+    console.log('🚀 Initializing app...');
+    
+    try {
+      // Batch async operations
+      const [onboardingSeen, authUnsubscribe] = await Promise.all([
+        AsyncStorage.getItem('hasSeenOnboarding'),
+        initializeAuthListener()
+      ]);
+      
+      setHasSeenOnboarding(onboardingSeen === 'true');
+      
+      console.log('✅ App initialization complete');
+      
+      // Use requestAnimationFrame for smoother initialization
+      requestAnimationFrame(() => {
+        InteractionManager.runAfterInteractions(() => {
+          setTimeout(() => {
+            setAppInitialized(true);
+          }, 1000); // Reduced further for better performance
+        });
+      });
+
+      return authUnsubscribe;
+      
+    } catch (error) {
+      console.error('❌ App initialization failed:', error);
+      setHasSeenOnboarding(false);
+      setAppInitialized(true);
+      return null;
+    }
+  }, [initializeAuthListener]);
+
   // Initialize app ONCE on mount
   useEffect(() => {
     let authUnsubscribe;
     
-    const initializeApp = async () => {
-      console.log('🚀 Initializing app...');
-      
-      try {
-        // Check if user has seen onboarding
-        const onboardingSeen = await AsyncStorage.getItem('hasSeenOnboarding');
-        setHasSeenOnboarding(onboardingSeen === 'true');
-        
-        // Initialize Firebase auth listener
-        authUnsubscribe = initializeAuthListener();
-        
-        console.log('✅ App initialization complete');
-        
-        // Wait for auth to initialize, then hide splash
-        setTimeout(() => {
-          setAppInitialized(true);
-        }, 2000);
-        
-      } catch (error) {
-        console.error('❌ App initialization failed:', error);
-        setHasSeenOnboarding(false);
-        setAppInitialized(true);
-      }
+    const init = async () => {
+      authUnsubscribe = await initializeApp();
     };
 
-    initializeApp();
+    init();
 
     return () => {
       if (authUnsubscribe) authUnsubscribe();
     };
-  }, []);
+  }, [initializeApp]);
 
-  // Hide splash when app is ready AND auth is fully initialized
+  // Optimized splash hiding with animation frame
   useEffect(() => {
-    // For authenticated users: wait for profile to be loaded
-    // For non-authenticated users: just wait for auth to be initialized
     const authSetupComplete = isInitialized && (!isAuthenticated || isProfileLoaded);
     
     if (appInitialized && authSetupComplete && !splashHiddenPermanently.current) {
       console.log('🎬 Hiding splash screen permanently');
-      setSplashVisible(false);
-      splashHiddenPermanently.current = true;
+      
+      requestAnimationFrame(() => {
+        InteractionManager.runAfterInteractions(() => {
+          setSplashVisible(false);
+          splashHiddenPermanently.current = true;
+        });
+      });
     }
   }, [appInitialized, isInitialized, isAuthenticated, isProfileLoaded]);
 
-  // Force hide splash if it's been more than 10 seconds (failsafe)
+  // Optimized failsafe timer
   useEffect(() => {
     const failsafeTimer = setTimeout(() => {
       if (!splashHiddenPermanently.current) {
-        console.log('⚠️ Failsafe: Hiding splash after 10 seconds');
-        setSplashVisible(false);
-        splashHiddenPermanently.current = true;
+        console.log('⚠️ Failsafe: Hiding splash after 6 seconds');
+        requestAnimationFrame(() => {
+          setSplashVisible(false);
+          splashHiddenPermanently.current = true;
+        });
       }
-    }, 10000);
+    }, 6000); // Reduced for better UX
 
     return () => clearTimeout(failsafeTimer);
   }, []);
+
+  // Pre-rendered navigation stacks for maximum performance
+  const authenticatedUserStack = useMemo(() => (
+    <Stack.Navigator
+      screenOptions={{
+        ...DEFAULT_STACK_OPTIONS,
+        detachPreviousScreen: false, // Keep previous screen for smooth back navigation
+        cardOverlayEnabled: false,
+      }}
+      initialRouteName="MainTabs"
+      headerMode="none"
+    >
+      <Stack.Screen
+        name="MainTabs"
+        component={AppTabs}
+        options={INSTANT_TRANSITION}
+      />
+      
+      <Stack.Screen
+        name="Details"
+        component={Details}
+        options={({ navigation }) => ({
+          header: () => (
+            <FrostedHeader
+              title="Details"
+              navigation={navigation}
+              showBack={true}
+            />
+          ),
+          ...ULTRA_SMOOTH_TRANSITION,
+        })}
+      />
+    </Stack.Navigator>
+  ), []);
+
+  const onboardingStack = useMemo(() => (
+    <Stack.Navigator 
+      initialRouteName="PersonalInfoScreen"
+      screenOptions={DEFAULT_STACK_OPTIONS}
+      headerMode="none"
+    >
+      <Stack.Screen 
+        name="PersonalInfoScreen" 
+        component={PersonalInfoWrapper}
+        options={INSTANT_TRANSITION}
+      />
+      <Stack.Screen 
+        name="GoalPreferenceScreen" 
+        component={GoalPreferenceWrapper}
+        options={ULTRA_SMOOTH_TRANSITION}
+      />
+      <Stack.Screen 
+        name="DietPreferenceScreen" 
+        component={DietPreferenceWrapper}
+        options={ULTRA_SMOOTH_TRANSITION}
+      />
+    </Stack.Navigator>
+  ), []);
+
+  const newUserStack = useMemo(() => (
+    <Stack.Navigator 
+      initialRouteName="Onboarding"
+      screenOptions={DEFAULT_STACK_OPTIONS}
+      headerMode="none"
+    >
+      <Stack.Screen 
+        name="Onboarding" 
+        component={Onboarding}
+        options={INSTANT_TRANSITION}
+      />
+      <Stack.Screen 
+        name="AuthScreen" 
+        component={AuthScreen} 
+        options={MODAL_SMOOTH_TRANSITION}
+      />
+      <Stack.Screen 
+        name="ForgotPasswordScreen" 
+        component={ForgotPasswordScreen}
+        options={ULTRA_SMOOTH_TRANSITION}
+      />
+      <Stack.Screen 
+        name="VerifyOTPScreen" 
+        component={VerifyOTPScreen}
+        options={ULTRA_SMOOTH_TRANSITION}
+      />
+      <Stack.Screen 
+        name="PasswordCreationScreen" 
+        component={PasswordCreationScreen}
+        options={ULTRA_SMOOTH_TRANSITION}
+      />
+      <Stack.Screen 
+        name="PersonalInfoScreen" 
+        component={PersonalInfoWrapper}
+        options={ULTRA_SMOOTH_TRANSITION}
+      />
+      <Stack.Screen 
+        name="GoalPreferenceScreen" 
+        component={GoalPreferenceWrapper}
+        options={ULTRA_SMOOTH_TRANSITION}
+      />
+      <Stack.Screen 
+        name="DietPreferenceScreen" 
+        component={DietPreferenceWrapper}
+        options={ULTRA_SMOOTH_TRANSITION}
+      />
+    </Stack.Navigator>
+  ), []);
+
+  const returningUserStack = useMemo(() => (
+    <Stack.Navigator 
+      initialRouteName="AuthScreen"
+      screenOptions={DEFAULT_STACK_OPTIONS}
+      headerMode="none"
+    >
+      <Stack.Screen 
+        name="AuthScreen" 
+        component={AuthScreen}
+        options={INSTANT_TRANSITION}
+      />
+      <Stack.Screen 
+        name="ForgotPasswordScreen" 
+        component={ForgotPasswordScreen} 
+        options={MODAL_SMOOTH_TRANSITION}
+      />
+      <Stack.Screen 
+        name="VerifyOTPScreen" 
+        component={VerifyOTPScreen} 
+        options={MODAL_SMOOTH_TRANSITION}
+      />
+      <Stack.Screen 
+        name="PasswordCreationScreen" 
+        component={PasswordCreationScreen} 
+        options={MODAL_SMOOTH_TRANSITION}
+      />
+      <Stack.Screen 
+        name="PersonalInfoScreen" 
+        component={PersonalInfoWrapper}
+        options={ULTRA_SMOOTH_TRANSITION}
+      />
+      <Stack.Screen 
+        name="GoalPreferenceScreen" 
+        component={GoalPreferenceWrapper}
+        options={ULTRA_SMOOTH_TRANSITION}
+      />
+      <Stack.Screen 
+        name="DietPreferenceScreen" 
+        component={DietPreferenceWrapper}
+        options={ULTRA_SMOOTH_TRANSITION}
+      />
+    </Stack.Navigator>
+  ), []);
 
   console.log('🔍 App State:', {
     splashVisible,
@@ -241,170 +645,21 @@ const MainNavigator = () => {
     
     if (hasCompletedOnboarding) {
       console.log('✅ Showing main app - user completed onboarding');
-      return (
-        <Stack.Navigator
-          screenOptions={{
-            headerShown: false,
-            cardStyle: { backgroundColor: '#fff' },
-            presentation: 'card',
-            animationEnabled: true,
-            animationTypeForReplace: 'reveal_from_bottom',
-            gestureEnabled: true,
-          }}
-        >
-          <Stack.Screen
-            name="MainTabs"
-            component={AppTabs}
-            options={{ 
-              headerShown: false,
-              animationEnabled: false,
-              animation: "reveal_from_bottom"
-            }}
-          />
-          
-          
-          <Stack.Screen
-            name="Breakfast"
-            component={BreakfastScreen}
-            options={{
-              headerShown: false,
-              gestureEnabled: true,
-              // Custom slide-up animation from bottom
-              cardStyleInterpolator: ({ current, layouts }) => {
-                return {
-                  cardStyle: {
-                    transform: [
-                      {
-                        translateY: current.progress.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [layouts.screen.height * 0.5, 0],
-                        }),
-                      },
-                    ],
-                    opacity: current.progress.interpolate({
-                      inputRange: [0, 0.3, 1],
-                      outputRange: [0, 0.7, 1],
-                    }),
-                  },
-                };
-              },
-              // Custom timing for smooth transition
-              transitionSpec: {
-                open: {
-                  animation: 'timing',
-                  config: {
-                    duration: 400,
-                    useNativeDriver: true,
-                  },
-                },
-                close: {
-                  animation: 'timing',
-                  config: {
-                    duration: 350,
-                    useNativeDriver: true,
-                  },
-                },
-              },
-              // Gesture configuration for smooth back swipe
-              gestureResponseDistance: 150,
-              gestureVelocityImpact: 0.3,
-            }}
-          />
-          
-          <Stack.Screen
-            name="Details"
-            component={Details}
-            options={({ navigation }) => ({
-              header: () => (
-                <FrostedHeader
-                  title="Details"
-                  navigation={navigation}
-                  showBack={true}
-                />
-              ),
-              gestureEnabled: true,
-              animation: "slide_from_right",
-            })}
-          />
-        </Stack.Navigator>
-      );
+      return authenticatedUserStack;
     } else {
       console.log('📝 User needs onboarding - showing PersonalInfoScreen');
-      return (
-        <Stack.Navigator 
-          initialRouteName="PersonalInfoScreen"
-          screenOptions={{ 
-            headerShown: false,
-            cardStyle: { backgroundColor: '#fff' },
-            animationEnabled: true,
-            animationTypeForReplace: 'push',
-          }}
-        >
-          <Stack.Screen 
-            name="PersonalInfoScreen" 
-            component={PersonalInfoWrapper}
-            options={{ animationEnabled: false }}
-          />
-          <Stack.Screen name="GoalPreferenceScreen" component={GoalPreferenceWrapper} />
-          <Stack.Screen name="DietPreferenceScreen" component={DietPreferenceWrapper} />
-        </Stack.Navigator>
-      );
+      return onboardingStack;
     }
   }
 
   // ========== UNAUTHENTICATED USER FLOWS ==========
   if (!hasSeenOnboarding) {
     console.log('🎬 New user - showing onboarding flow');
-    return (
-      <Stack.Navigator 
-        initialRouteName="Onboarding"
-        screenOptions={{ 
-          headerShown: false,
-          cardStyle: { backgroundColor: '#fff' },
-          animationEnabled: true,
-          animationTypeForReplace: 'slide_from_bottom',
-        }}
-      >
-        <Stack.Screen 
-          name="Onboarding" 
-          component={Onboarding}
-          options={{ animationEnabled: false }}
-        />
-        <Stack.Screen name="AuthScreen" component={AuthScreen} options={{animation: "slide_from_bottom"}} />
-        <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} />
-        <Stack.Screen name="VerifyOTPScreen" component={VerifyOTPScreen} />
-        <Stack.Screen name="PasswordCreationScreen" component={PasswordCreationScreen} />
-        <Stack.Screen name="PersonalInfoScreen" component={PersonalInfoWrapper} />
-        <Stack.Screen name="GoalPreferenceScreen" component={GoalPreferenceWrapper} />
-        <Stack.Screen name="DietPreferenceScreen" component={DietPreferenceWrapper} />
-      </Stack.Navigator>
-    );
+    return newUserStack;
   }
 
   console.log('🔄 Returning user - showing auth');
-  return (
-    <Stack.Navigator 
-      initialRouteName="AuthScreen"
-      screenOptions={{ 
-        headerShown: false,
-        cardStyle: { backgroundColor: '#fff' },
-        animationEnabled: true,
-        animationTypeForReplace: 'push',
-      }}
-    >
-      <Stack.Screen 
-        name="AuthScreen" 
-        component={AuthScreen}
-        options={{ animationEnabled: false, animation: "reveal_from_bottom" } }
-      />
-      <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} options={{animation: "slide_from_bottom"}} />
-      <Stack.Screen name="VerifyOTPScreen" component={VerifyOTPScreen} options={{animation: "slide_from_bottom"}} />
-      <Stack.Screen name="PasswordCreationScreen" component={PasswordCreationScreen} options={{animation: "slide_from_bottom"}} />
-      <Stack.Screen name="PersonalInfoScreen" component={PersonalInfoWrapper} />
-      <Stack.Screen name="GoalPreferenceScreen" component={GoalPreferenceWrapper} />
-      <Stack.Screen name="DietPreferenceScreen" component={DietPreferenceWrapper} />
-    </Stack.Navigator>
-  );
+  return returningUserStack;
 };
 
 const styles = StyleSheet.create({

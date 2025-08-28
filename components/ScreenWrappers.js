@@ -1,6 +1,7 @@
-// components/ScreenWrappers.js
+// components/ScreenWrappers.js - Fixed with Proper Scrolling
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Alert } from "react-native";
+import { useNavigation } from '@react-navigation/native';
 import StretchyHeader from "./StretchyHeader";
 
 // Dashboard Screen Wrapper - iOS Style
@@ -9,7 +10,7 @@ export const DashboardWrapper = ({ children, ...props }) => {
     <StretchyHeader
       title="Balanz"
       gradientColors={['#FFF8E8', '#FFF8E8', '#FFF8E8']}
-      blurIntensity={100} // iOS-level blur intensity
+      blurIntensity={100}
       headerHeight={90}
       {...props}
     >
@@ -88,15 +89,48 @@ export const ProfileWrapper = ({ children, ...props }) => {
   );
 };
 
-export const BreakfastWrapper = ({ children, ...props }) => {
+// Breakfast Screen Wrapper - WITH BACK BUTTON AND FIXED SCROLLING
+export const BreakfastWrapper = ({ children, onBackPress, ...props }) => {
+  const navigation = useNavigation();
+
+  // Default back press handler
+  const handleBackPress = () => {
+    if (onBackPress) {
+      onBackPress(); // Use custom back press if provided
+    } else if (navigation.canGoBack()) {
+      navigation.goBack(); // Default navigation back
+    } else {
+      // Fallback - navigate to a specific screen or show alert
+      Alert.alert(
+        "Navigate Back",
+        "Would you like to go to the main screen?",
+        [
+          { text: "Cancel", style: "cancel" },
+          { 
+            text: "Yes", 
+            onPress: () => {
+              // Navigate to your main screen - adjust route name as needed
+              navigation.navigate('Dashboard'); // or 'Home', 'Main', etc.
+            }
+          }
+        ]
+      );
+    }
+  };
+
   return (
     <StretchyHeader
       title="Breakfast"
       gradientColors={['#FFA726', '#FF7043', '#FF5722']}
       blurIntensity={100}
       headerHeight={90}
+      showBackButton={true} // Enable back button
+      onBackPress={handleBackPress} // Back button handler
+      backButtonColor="#1e1e1e" // Dark color for visibility
+      backButtonSize={24}
       {...props}
     >
+      {/* Fixed: Use scrollableContentWrapper for BreakfastWrapper */}
       <View style={styles.contentWrapper}>
         {children}
       </View>
@@ -105,14 +139,28 @@ export const BreakfastWrapper = ({ children, ...props }) => {
 };
 
 const styles = StyleSheet.create({
+  // Original contentWrapper for other screens
   contentWrapper: {
     flex: 1,
     backgroundColor: "#fff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    marginTop: -20, // Overlap with header for smooth transition
+    marginTop: -20,
     paddingTop: 20,
-    paddingHorizontal: 0, // Remove horizontal padding to eliminate white gaps
-    minHeight: 1000, // Ensure scrollable content
+    paddingHorizontal: 0,
+    minHeight: 1000, // This is fine for other screens
+  },
+  
+  // NEW: Scrollable content wrapper for BreakfastScreen
+  scrollableContentWrapper: {
+    flex: 1,
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    marginTop: -20,
+    paddingTop: 20,
+    paddingHorizontal: 0,
+    // REMOVED: minHeight - this was blocking scrolling
+    // minHeight: 1000, ❌ This prevents proper scrolling
   },
 });

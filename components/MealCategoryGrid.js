@@ -43,8 +43,9 @@ const MealCategoryGrid = ({ onCategoryPress }) => {
   const navigation = useNavigation();
 
   const handleCategoryPress = (category) => {
+    navigation.navigate("Breakfast");
     if (onCategoryPress) {
-      navigation.navigate("Breakfast");
+      
       onCategoryPress(category);
     }
   };

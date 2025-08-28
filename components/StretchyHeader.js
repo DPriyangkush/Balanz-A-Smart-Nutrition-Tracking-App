@@ -1,8 +1,9 @@
-// components/StretchyHeader.js
+// components/StretchyHeader.js - Enhanced with Back Button
 import React from "react";
-import { View, Text, StyleSheet, Dimensions, SafeAreaView } from "react-native";
+import { View, Text, StyleSheet, Dimensions, SafeAreaView, TouchableOpacity } from "react-native";
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { Ionicons } from '@expo/vector-icons'; // or your preferred icon library
 import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
@@ -22,7 +23,12 @@ export default function StretchyHeader({
   titleColor = "#fff",
   showSafeArea = true,
   gradientColors = ['#667eea', '#764ba2'],
-  blurIntensity = 100 // iOS-style blur intensity
+  blurIntensity = 100,
+  // New back button props
+  showBackButton = false,
+  onBackPress = null,
+  backButtonColor = "#1e1e1e", // Default dark color
+  backButtonSize = 24,
 }) {
   const scrollY = useSharedValue(0);
 
@@ -59,11 +65,10 @@ export default function StretchyHeader({
       Extrapolate.CLAMP
     );
 
-    // Title starts hidden (opacity 0) and becomes visible when scrolling
     const opacity = interpolate(
       scrollY.value,
-      [0, headerHeight * 0.15], // Start showing title after 15% scroll
-      [1, 1], // From completely hidden to fully visible
+      [0, headerHeight * 0.15],
+      [1, 1],
       Extrapolate.CLAMP
     );
 
@@ -83,16 +88,14 @@ export default function StretchyHeader({
     };
   });
 
-  // Animated style for text color - starts dark (#1e1e1e), becomes white (#fff) on scroll
   const titleColorStyle = useAnimatedStyle(() => {
     const colorProgress = interpolate(
       scrollY.value,
-      [0, headerHeight * 0.25], // Change color after 25% scroll
-      [0, 1], // From 0 (dark) to 1 (white)
+      [0, headerHeight * 0.25],
+      [0, 1],
       Extrapolate.CLAMP
     );
     
-    // Interpolate between #1e1e1e (30, 30, 30) and #ffffff (255, 255, 255)
     const red = interpolate(colorProgress, [0, 1], [30, 255], Extrapolate.CLAMP);
     const green = interpolate(colorProgress, [0, 1], [30, 255], Extrapolate.CLAMP);
     const blue = interpolate(colorProgress, [0, 1], [30, 255], Extrapolate.CLAMP);
@@ -102,12 +105,29 @@ export default function StretchyHeader({
     };
   });
 
-  // Solid background - visible initially, fades out on scroll
+  // Back button color animation - matches title color animation
+  const backButtonColorStyle = useAnimatedStyle(() => {
+    const colorProgress = interpolate(
+      scrollY.value,
+      [0, headerHeight * 0.25],
+      [0, 1],
+      Extrapolate.CLAMP
+    );
+    
+    const red = interpolate(colorProgress, [0, 1], [30, 255], Extrapolate.CLAMP);
+    const green = interpolate(colorProgress, [0, 1], [30, 255], Extrapolate.CLAMP);
+    const blue = interpolate(colorProgress, [0, 1], [30, 255], Extrapolate.CLAMP);
+    
+    return {
+      color: `rgb(${Math.round(red)}, ${Math.round(green)}, ${Math.round(blue)})`,
+    };
+  });
+
   const solidBackgroundStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
       scrollY.value,
       [0, headerHeight * 0.2],
-      [1, 0], // Start fully visible, fade out when scrolling
+      [1, 0],
       Extrapolate.CLAMP
     );
     
@@ -116,12 +136,11 @@ export default function StretchyHeader({
     };
   });
 
-  // Animated gradient - starts invisible, becomes visible on scroll (original behavior)
   const gradientStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
       scrollY.value,
       [0, headerHeight * 0.3],
-      [0, 1], // From completely transparent to fully visible
+      [0, 1],
       Extrapolate.CLAMP
     );
     
@@ -130,12 +149,11 @@ export default function StretchyHeader({
     };
   });
 
-  // Animated style for blur effects - starts invisible, becomes visible on scroll (original behavior)
   const blurStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
       scrollY.value,
       [0, headerHeight * 0.9],
-      [0, 1], // From completely transparent to fully visible
+      [0, 1],
       Extrapolate.CLAMP
     );
     
@@ -144,12 +162,11 @@ export default function StretchyHeader({
     };
   });
 
-  // Animated style for overlay - starts invisible, becomes visible on scroll
   const overlayStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
       scrollY.value,
       [0, headerHeight * 0.4],
-      [0, 0.15], // From transparent to subtle overlay
+      [0, 0.15],
       Extrapolate.CLAMP
     );
     
@@ -162,10 +179,8 @@ export default function StretchyHeader({
     <View style={[styles.container, { backgroundColor: 'transparent' }]}>
       {/* Header with iOS-style Blur */}
       <Animated.View style={[styles.headerContainer, headerStyle]}>
-        {/* Solid background - visible initially, fades out on scroll */}
         <Animated.View style={[styles.solidBackground, solidBackgroundStyle]} />
 
-        {/* Base gradient layer - Animated opacity (original behavior) */}
         <Animated.View style={[styles.gradientContainer, gradientStyle]}>
           <LinearGradient
             colors={gradientColors}
@@ -175,16 +190,14 @@ export default function StretchyHeader({
           />
         </Animated.View>
         
-        {/* iOS-style BlurView - Animated opacity (original behavior) */}
         <Animated.View style={[styles.blurContainer, blurStyle]}>
           <BlurView 
             intensity={blurIntensity}
-            tint="systemMaterialDark" // Back to original tint
+            tint="systemMaterialDark"
             style={styles.iosBlur}
           />
         </Animated.View>
 
-        {/* Secondary blur layer for extra iOS effect - Animated opacity */}
         <Animated.View style={[styles.secondaryBlurContainer, blurStyle]}>
           <BlurView 
             intensity={60}
@@ -193,7 +206,6 @@ export default function StretchyHeader({
           />
         </Animated.View>
         
-        {/* Subtle overlay for better text contrast - Animated opacity */}
         <Animated.View style={[styles.overlay, overlayStyle]} />
       </Animated.View>
 
@@ -210,10 +222,29 @@ export default function StretchyHeader({
         {children}
       </Animated.ScrollView>
 
-      {/* Title Overlay */}
+      {/* Title and Back Button Overlay */}
       <Animated.View style={[styles.titleContainer, titleStyle]}>
         {showSafeArea && <SafeAreaView />}
         <View style={styles.titleWrapper}>
+          {/* Back Button - positioned absolutely on the left */}
+          {showBackButton && onBackPress && (
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={onBackPress}
+              activeOpacity={0.7}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Animated.View style={backButtonColorStyle}>
+                <Ionicons 
+                  name="chevron-back" 
+                  size={backButtonSize} 
+                  color={backButtonColor}
+                />
+              </Animated.View>
+            </TouchableOpacity>
+          )}
+          
+          {/* Title - centered */}
           <Animated.Text style={[styles.title, titleColorStyle]}>{title}</Animated.Text>
         </View>
       </Animated.View>
@@ -239,7 +270,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "#FFF8E8", // Light solid color - change this to your preferred initial color
+    backgroundColor: "#FFF8E8",
   },
   gradientContainer: {
     position: "absolute",
@@ -305,6 +336,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
+    width: '100%',
+    flexDirection: 'row', // Enable horizontal layout
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    left: 0,
+    zIndex: 3,
+    padding: 8, // Increased touch target
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Subtle background
+    backdropFilter: 'blur(10px)', // iOS-style backdrop blur effect
   },
   title: {
     fontSize: 20,
@@ -316,7 +359,7 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0, 0, 0, 0.3)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
-    // Color is now handled by titleColorStyle animation
+    flex: 1, // Take remaining space to stay centered
   },
   scrollContent: {
     flexGrow: 1,
