@@ -1,10 +1,159 @@
-// components/ScreenWrappers.js - Fixed with Proper Scrolling
+// components/UpdatedScreenWrappers.js - Location Style Screen Wrappers
 import React from "react";
 import { View, StyleSheet, Alert } from "react-native";
 import { useNavigation } from '@react-navigation/native';
-import StretchyHeader from "./StretchyHeader";
+import LocationStyleHeader from "./LocationStyleHeader";
+import StretchyHeader from "./StretchyHeader"; // Keep for screens that need the old style
 
-// Dashboard Screen Wrapper - iOS Style
+// Meal Screen Wrapper - Location Style
+export const MealWrapper = ({ 
+  children, 
+  profileImage = null,
+  onProfilePress = null,
+  onNotificationPress = null,
+  hasNotificationBadge = false,
+  ...props 
+}) => {
+  const navigation = useNavigation();
+
+  const handleProfilePress = () => {
+    if (onProfilePress) {
+      onProfilePress();
+    } else {
+      navigation.navigate('Profile'); // Default navigation to profile
+    }
+  };
+
+  const handleNotificationPress = () => {
+    if (onNotificationPress) {
+      onNotificationPress();
+    } else {
+      // Default notification action
+      Alert.alert("Notifications", "No new notifications");
+    }
+  };
+
+  return (
+    <LocationStyleHeader
+      title="Meals & Nutrition"
+      headerHeight={110}
+      profileImage={profileImage}
+      onProfilePress={handleProfilePress}
+      onNotificationPress={handleNotificationPress}
+      hasNotificationBadge={hasNotificationBadge}
+      backgroundColor="#FFF8E8"
+      titleColor="#333333"
+      subtitleColor="#666666"
+      gradientColors={['#FFF8E8', '#FFFFFF', '#F0F0F0']}
+      blurIntensity={100}
+      {...props}
+    >
+      <View style={styles.contentWrapper}>
+        {children}
+      </View>
+    </LocationStyleHeader>
+  );
+};
+
+// AI Screen Wrapper - Location Style
+export const AIWrapper = ({ 
+  children, 
+  profileImage = null,
+  onProfilePress = null,
+  onNotificationPress = null,
+  hasNotificationBadge = false,
+  ...props 
+}) => {
+  const navigation = useNavigation();
+
+  const handleProfilePress = () => {
+    if (onProfilePress) {
+      onProfilePress();
+    } else {
+      navigation.navigate('Profile');
+    }
+  };
+
+  const handleNotificationPress = () => {
+    if (onNotificationPress) {
+      onNotificationPress();
+    } else {
+      Alert.alert("Notifications", "No new notifications");
+    }
+  };
+
+  return (
+    <LocationStyleHeader
+      title="AI Assistant"
+      headerHeight={140}
+      profileImage={profileImage}
+      onProfilePress={handleProfilePress}
+      onNotificationPress={handleNotificationPress}
+      hasNotificationBadge={hasNotificationBadge}
+      backgroundColor="#F5F5FA"
+      titleColor="#333333"
+      subtitleColor="#666666"
+      gradientColors={['#F5F5FA', '#E8E8ED', '#DCDCE0']}
+      blurIntensity={100}
+      {...props}
+    >
+      <View style={styles.contentWrapper}>
+        {children}
+      </View>
+    </LocationStyleHeader>
+  );
+};
+
+// Progress Screen Wrapper - Location Style
+export const ProgressWrapper = ({ 
+  children, 
+  profileImage = null,
+  onProfilePress = null,
+  onNotificationPress = null,
+  hasNotificationBadge = false,
+  ...props 
+}) => {
+  const navigation = useNavigation();
+
+  const handleProfilePress = () => {
+    if (onProfilePress) {
+      onProfilePress();
+    } else {
+      navigation.navigate('Profile');
+    }
+  };
+
+  const handleNotificationPress = () => {
+    if (onNotificationPress) {
+      onNotificationPress();
+    } else {
+      Alert.alert("Notifications", "No new notifications");
+    }
+  };
+
+  return (
+    <LocationStyleHeader
+      title="Progress Tracking"
+      headerHeight={140}
+      profileImage={profileImage}
+      onProfilePress={handleProfilePress}
+      onNotificationPress={handleNotificationPress}
+      hasNotificationBadge={hasNotificationBadge}
+      backgroundColor="#F0F9F0"
+      titleColor="#333333"
+      subtitleColor="#666666"
+      gradientColors={['#F0F9F0', '#E8F5E8', '#E0F0E0']}
+      blurIntensity={100}
+      {...props}
+    >
+      <View style={styles.contentWrapper}>
+        {children}
+      </View>
+    </LocationStyleHeader>
+  );
+};
+
+// Dashboard Screen Wrapper - Keep Original Style (if needed)
 export const DashboardWrapper = ({ children, ...props }) => {
   return (
     <StretchyHeader
@@ -21,58 +170,7 @@ export const DashboardWrapper = ({ children, ...props }) => {
   );
 };
 
-// Meal Screen Wrapper - iOS Style
-export const MealWrapper = ({ children, ...props }) => {
-  return (
-    <StretchyHeader
-      title="Meals"
-      gradientColors={['#FF6B6B', '#FF8E8E', '#FFB6B6']}
-      blurIntensity={100}
-      headerHeight={90}
-      {...props}
-    >
-      <View style={styles.contentWrapper}>
-        {children}
-      </View>
-    </StretchyHeader>
-  );
-};
-
-// AI Screen Wrapper - iOS Style
-export const AIWrapper = ({ children, ...props }) => {
-  return (
-    <StretchyHeader
-      title="AI Assistant"
-      gradientColors={['#667eea', '#764ba2', '#9c5faa']}
-      blurIntensity={100}
-      headerHeight={130}
-      {...props}
-    >
-      <View style={styles.contentWrapper}>
-        {children}
-      </View>
-    </StretchyHeader>
-  );
-};
-
-// Progress Screen Wrapper - iOS Style
-export const ProgressWrapper = ({ children, ...props }) => {
-  return (
-    <StretchyHeader
-      title="Progress"
-      gradientColors={['#4ECDC4', '#44A08D', '#3F7F7A']}
-      blurIntensity={100}
-      headerHeight={130}
-      {...props}
-    >
-      <View style={styles.contentWrapper}>
-        {children}
-      </View>
-    </StretchyHeader>
-  );
-};
-
-// Profile Screen Wrapper - iOS Style
+// Profile Screen Wrapper - Keep Original Style (since this IS the profile)
 export const ProfileWrapper = ({ children, ...props }) => {
   return (
     <StretchyHeader
@@ -89,18 +187,16 @@ export const ProfileWrapper = ({ children, ...props }) => {
   );
 };
 
-// Breakfast Screen Wrapper - WITH BACK BUTTON AND FIXED SCROLLING
+// Breakfast Screen Wrapper - Keep Original Style with Back Button
 export const BreakfastWrapper = ({ children, onBackPress, ...props }) => {
   const navigation = useNavigation();
 
-  // Default back press handler
   const handleBackPress = () => {
     if (onBackPress) {
-      onBackPress(); // Use custom back press if provided
+      onBackPress();
     } else if (navigation.canGoBack()) {
-      navigation.goBack(); // Default navigation back
+      navigation.goBack();
     } else {
-      // Fallback - navigate to a specific screen or show alert
       Alert.alert(
         "Navigate Back",
         "Would you like to go to the main screen?",
@@ -109,8 +205,7 @@ export const BreakfastWrapper = ({ children, onBackPress, ...props }) => {
           { 
             text: "Yes", 
             onPress: () => {
-              // Navigate to your main screen - adjust route name as needed
-              navigation.navigate('Dashboard'); // or 'Home', 'Main', etc.
+              navigation.navigate('Dashboard');
             }
           }
         ]
@@ -124,13 +219,12 @@ export const BreakfastWrapper = ({ children, onBackPress, ...props }) => {
       gradientColors={['#FFA726', '#FF7043', '#FF5722']}
       blurIntensity={100}
       headerHeight={90}
-      showBackButton={true} // Enable back button
-      onBackPress={handleBackPress} // Back button handler
-      backButtonColor="#1e1e1e" // Dark color for visibility
+      showBackButton={true}
+      onBackPress={handleBackPress}
+      backButtonColor="#1e1e1e"
       backButtonSize={24}
       {...props}
     >
-      {/* Fixed: Use scrollableContentWrapper for BreakfastWrapper */}
       <View style={styles.contentWrapper}>
         {children}
       </View>
@@ -139,7 +233,6 @@ export const BreakfastWrapper = ({ children, onBackPress, ...props }) => {
 };
 
 const styles = StyleSheet.create({
-  // Original contentWrapper for other screens
   contentWrapper: {
     flex: 1,
     backgroundColor: "#fff",
@@ -148,19 +241,6 @@ const styles = StyleSheet.create({
     marginTop: -20,
     paddingTop: 20,
     paddingHorizontal: 0,
-    minHeight: 1000, // This is fine for other screens
-  },
-  
-  // NEW: Scrollable content wrapper for BreakfastScreen
-  scrollableContentWrapper: {
-    flex: 1,
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    marginTop: -20,
-    paddingTop: 20,
-    paddingHorizontal: 0,
-    // REMOVED: minHeight - this was blocking scrolling
-    // minHeight: 1000, ❌ This prevents proper scrolling
+    minHeight: 1000,
   },
 });

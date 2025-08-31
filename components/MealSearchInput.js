@@ -9,7 +9,6 @@ const MealSearchInput = ({
   placeholder = "Find your healthy meal...", 
   onChangeText, 
   value,
-  onMenuPress,
   onSubmitEditing,
   onBackPress,
   showBackButton = false,
@@ -63,7 +62,7 @@ const MealSearchInput = ({
     return 16;
   };
 
-  const getMenuButtonPadding = () => {
+  const getBackButtonPadding = () => {
     if (isSmallScreen) return { horizontal: 12, vertical: 13 };
     if (isMediumScreen) return { horizontal: 16, vertical: 15 };
     if (isLargeScreen) return { horizontal: 20, vertical: 21 };
@@ -123,7 +122,7 @@ const MealSearchInput = ({
   const horizontalPadding = getHorizontalPadding();
   const borderRadius = getBorderRadius();
   const iconSize = getIconSize();
-  const menuButtonPadding = getMenuButtonPadding();
+  const backButtonPadding = getBackButtonPadding();
   const shadowProps = getShadowProps();
   const borderWidth = getBorderWidth();
 
@@ -148,13 +147,6 @@ const MealSearchInput = ({
       onBackPress();
     } else {
       console.warn('onBackPress is not defined');
-    }
-  };
-
-  // Handle menu button press
-  const handleMenuPress = () => {
-    if (onMenuPress) {
-      onMenuPress();
     }
   };
 
@@ -212,32 +204,13 @@ const MealSearchInput = ({
       outline: 'none',
       minHeight: isSmallScreen ? 28 : isMediumScreen ? 32 : 36,
     },
-    
-    actionButton: {
-      backgroundColor: 'rgba(255, 255, 255, 0.85)',
-      borderRadius: borderRadius,
-      paddingHorizontal: menuButtonPadding.horizontal,
-      paddingVertical: menuButtonPadding.vertical,
-      borderWidth: borderWidth,
-      borderColor: 'rgba(255, 255, 255, 0.3)',
-      shadowColor: '#000',
-      ...shadowProps,
-      ...(isTablet && {
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        borderColor: 'rgba(255, 255, 255, 0.4)',
-      }),
-      justifyContent: 'center',
-      alignItems: 'center',
-      width: isSmallScreen ? 48 : isMediumScreen ? 52 : 56,
-      height: isSmallScreen ? 48 : isMediumScreen ? 52 : 56,
-    },
 
     // Enhanced back button with guaranteed touch response
     enhancedBackButton: {
       backgroundColor: 'rgba(255, 255, 255, 0.95)',
       borderRadius: borderRadius,
-      paddingHorizontal: menuButtonPadding.horizontal,
-      paddingVertical: menuButtonPadding.vertical,
+      paddingHorizontal: backButtonPadding.horizontal,
+      paddingVertical: backButtonPadding.vertical,
       borderWidth: borderWidth,
       borderColor: 'rgba(255, 255, 255, 0.5)',
       shadowColor: '#000',
@@ -325,24 +298,6 @@ const MealSearchInput = ({
           textAlignVertical="center"
         />
       </View>
-
-      {!showBackButton && (
-        <TouchableOpacity 
-          style={responsiveStyles.actionButton}
-          onPress={handleMenuPress}
-          activeOpacity={0.7}
-          accessibilityLabel="Open menu"
-          accessibilityHint="Tap to open the main menu"
-          accessibilityRole="button"
-          hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-        >
-          <Ionicons 
-            name="menu" 
-            size={iconSize} 
-            color="#333" 
-          />
-        </TouchableOpacity>
-      )}
     </View>
   );
 };

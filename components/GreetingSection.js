@@ -21,7 +21,10 @@ const GreetingSection = ({
   userName = "Priyangkush",
   mealCount = 369,
   customGreeting,
-  customSubtext
+  customSubtext,
+  style, // Accept style prop for the container
+  greetingTextStyle, // Accept style prop for greeting text
+  subtextStyle, // Accept style prop for subtext
 }) => {
   const greeting = customGreeting || `Hello, ${userName}`;
   const subtext = customSubtext || [
@@ -51,14 +54,14 @@ const GreetingSection = ({
   });
 
   return (
-    <YStack style={styles.greetingSection} space="$1">
-      <Text style={styles.greeting}>{greeting}</Text>
+    <YStack style={[styles.greetingSection, style]} space="$1">
+      <Text style={[styles.greeting, greetingTextStyle]}>{greeting}</Text>
       {Array.isArray(subtext) ? (
         subtext.map((line, index) => (
-          <Text key={index} style={styles.subGreeting}>{line}</Text>
+          <Text key={index} style={[styles.subGreeting, subtextStyle]}>{line}</Text>
         ))
       ) : (
-        <Text style={styles.subGreeting}>{subtext}</Text>
+        <Text style={[styles.subGreeting, subtextStyle]}>{subtext}</Text>
       )}
     </YStack>
   );
