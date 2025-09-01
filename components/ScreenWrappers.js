@@ -1,6 +1,6 @@
 // components/UpdatedScreenWrappers.js - Location Style Screen Wrappers
 import React from "react";
-import { View, StyleSheet, Alert } from "react-native";
+import { View, StyleSheet, Alert, ScrollView } from "react-native";
 import { useNavigation } from '@react-navigation/native';
 import LocationStyleHeader from "./LocationStyleHeader";
 import StretchyHeader from "./StretchyHeader"; // Keep for screens that need the old style
@@ -48,9 +48,9 @@ export const MealWrapper = ({
       blurIntensity={100}
       {...props}
     >
-      <View style={styles.contentWrapper}>
+      <ScrollView style={styles.contentScrollWrapper}>
         {children}
-      </View>
+      </ScrollView>
     </LocationStyleHeader>
   );
 };
@@ -97,9 +97,9 @@ export const AIWrapper = ({
       blurIntensity={100}
       {...props}
     >
-      <View style={styles.contentWrapper}>
+      <ScrollView style={styles.contentScrollWrapper}>
         {children}
-      </View>
+      </ScrollView>
     </LocationStyleHeader>
   );
 };
@@ -146,9 +146,9 @@ export const ProgressWrapper = ({
       blurIntensity={100}
       {...props}
     >
-      <View style={styles.contentWrapper}>
+      <ScrollView style={styles.contentScrollWrapper}>
         {children}
-      </View>
+      </ScrollView>
     </LocationStyleHeader>
   );
 };
@@ -163,9 +163,9 @@ export const DashboardWrapper = ({ children, ...props }) => {
       headerHeight={90}
       {...props}
     >
-      <View style={styles.contentWrapper}>
+      <ScrollView style={styles.contentScrollWrapper}>
         {children}
-      </View>
+      </ScrollView>
     </StretchyHeader>
   );
 };
@@ -180,58 +180,66 @@ export const ProfileWrapper = ({ children, ...props }) => {
       headerHeight={130}
       {...props}
     >
-      <View style={styles.contentWrapper}>
+      <ScrollView style={styles.contentScrollWrapper}>
         {children}
-      </View>
+      </ScrollView>
     </StretchyHeader>
   );
 };
 
-// Breakfast Screen Wrapper - Keep Original Style with Back Button
-export const BreakfastWrapper = ({ children, onBackPress, ...props }) => {
+// Also update your BreakfastWrapper in ScreenWrappers to ensure better scrolling:
+export const BreakfastWrapper = ({ 
+  children, 
+  profileImage = null,
+  onProfilePress = null,
+  onNotificationPress = null,
+  hasNotificationBadge = false,
+  ...props 
+}) => {
   const navigation = useNavigation();
 
-  const handleBackPress = () => {
-    if (onBackPress) {
-      onBackPress();
-    } else if (navigation.canGoBack()) {
-      navigation.goBack();
+  const handleProfilePress = () => {
+    if (onProfilePress) {
+      onProfilePress();
     } else {
-      Alert.alert(
-        "Navigate Back",
-        "Would you like to go to the main screen?",
-        [
-          { text: "Cancel", style: "cancel" },
-          { 
-            text: "Yes", 
-            onPress: () => {
-              navigation.navigate('Dashboard');
-            }
-          }
-        ]
-      );
+      navigation.navigate('Profile');
+    }
+  };
+
+  const handleNotificationPress = () => {
+    if (onNotificationPress) {
+      onNotificationPress();
+    } else {
+      Alert.alert("Notifications", "No new notifications");
     }
   };
 
   return (
-    <StretchyHeader
-      title="Breakfast"
-      gradientColors={['#FFA726', '#FF7043', '#FF5722']}
-      blurIntensity={100}
-      headerHeight={90}
-      showBackButton={true}
-      onBackPress={handleBackPress}
-      backButtonColor="#1e1e1e"
-      backButtonSize={24}
-      {...props}
-    >
-      <View style={styles.contentWrapper}>
-        {children}
-      </View>
-    </StretchyHeader>
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+      <LocationStyleHeader
+        title="Breakfast"
+        headerHeight={110}
+        profileImage={profileImage}
+        onProfilePress={handleProfilePress}
+        onNotificationPress={handleNotificationPress}
+        hasNotificationBadge={hasNotificationBadge}
+        backgroundColor="#FFF8E8"
+        titleColor="#333333"
+        subtitleColor="#666666"
+        gradientColors={['#FFF8E8', '#FFFFFF', '#F0F0F0']}
+        blurIntensity={100}
+        {...props}
+      >
+        {/* REMOVE the ScrollView wrapper - this is causing the issue */}
+        <View style={styles.contentWrapper}>
+          {children}
+        </View>
+      </LocationStyleHeader>
+    </View>
   );
 };
 
+// Updated styles
 const styles = StyleSheet.create({
   contentWrapper: {
     flex: 1,
@@ -240,7 +248,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     marginTop: -20,
     paddingTop: 20,
-    paddingHorizontal: 0,
-    minHeight: 1000,
+  
+    // Remove minHeight as it can cause issues
   },
+  // Remove contentScrollWrapper as we're not using ScrollView anymore
 });

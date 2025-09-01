@@ -3,20 +3,20 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const HeaderSection = ({ userName = "Rafiq", onSearchPress, onNotificationPress, onProfilePress }) => {
+const HeaderSection = ({ userName = "Priyangkush", onSearchPress, onNotificationPress, onProfilePress }) => {
     return (
         <View style={styles.container}>
             <View style={styles.topRow}>
                 <View style={styles.leftSection}>
-                    <Text style={styles.greeting}>Hi {userName}</Text>
+                    <Text style={styles.greeting}>Hi {userName},</Text>
                     <Text style={styles.subGreeting}>Welcome to Tasty!</Text>
                 </View>
                 <View style={styles.rightSection}>
                     <TouchableOpacity style={styles.iconButton} onPress={onSearchPress}>
-                        <Ionicons name="search" size={24} color="black" />
+                        <Ionicons name="search" size={24} color="#1e1e1e" />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.iconButton} onPress={onNotificationPress}>
-                        <Ionicons name="notifications" size={24} color="black" />
+                        <Ionicons name="notifications" size={24} color="#1e1e1e" />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.profileButton} onPress={onProfilePress}>
                         <Image 
@@ -54,12 +54,12 @@ const styles = StyleSheet.create({
     greeting: {
         fontSize: 18,
         fontWeight: '600',
-        color: 'black',
+        color: '#1e1e1e',
         marginBottom: 2,
     },
     subGreeting: {
-        fontSize: 14,
-        color: 'rgba(0, 0, 0, 0.8)',
+        fontSize: 16,
+        color: '#1e1e1e',
     },
     iconButton: {
         padding: 5,
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     mainTitle: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: 'black',
+        color: '#1e1e1e',
         lineHeight: 36,
         maxWidth: '80%',
     },

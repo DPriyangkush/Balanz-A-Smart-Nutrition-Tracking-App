@@ -17,7 +17,7 @@ const PromoCard = ({
                     <Text style={styles.subtitle}>{subtitle}</Text>
                     <TouchableOpacity style={styles.button} onPress={onPress}>
                         <Text style={styles.buttonText}>{buttonText}</Text>
-                        <Text style={styles.arrow}>→</Text>
+                        
                     </TouchableOpacity>
                 </View>
                 <View style={styles.imageSection}>
@@ -30,9 +30,9 @@ const PromoCard = ({
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: '#F5F5F5',
-        borderRadius: 20,
-        marginHorizontal: 20,
+        backgroundColor: '#1e1e1e',
+        borderRadius: 25,
+        marginHorizontal: 5,
         marginBottom: 25,
         overflow: 'hidden',
         elevation: 3,
@@ -65,25 +65,28 @@ const styles = StyleSheet.create({
         marginBottom: 15,
     },
     button: {
-        backgroundColor: '#8B4513',
-        borderRadius: 25,
+        backgroundColor: '#EDFDEE',
+        borderRadius: 13,
         paddingVertical: 12,
         paddingHorizontal: 20,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         alignSelf: 'flex-start',
+        
     },
     buttonText: {
-        color: 'white',
+        color: '#1e1e1e',
         fontSize: 14,
         fontWeight: '600',
         marginRight: 5,
+        
     },
     arrow: {
-        color: 'white',
+        color: '#1e1e1e',
         fontSize: 16,
         fontWeight: 'bold',
+        
     },
     image: {
         width: '100%',

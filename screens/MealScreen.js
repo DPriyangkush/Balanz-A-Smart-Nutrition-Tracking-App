@@ -663,7 +663,7 @@ const MealScreen = ({ navigation }) => {
     content: {
       flex: 1,
       paddingHorizontal: responsiveConfig.horizontalPadding,
-      paddingTop: responsiveConfig.isTablet ? 20 : 10,
+      paddingTop: responsiveConfig.isTablet ? 20 : 0,
       maxWidth: responsiveConfig.isLargeScreen ? 1200 : '100%',
       alignSelf: 'center',
     },

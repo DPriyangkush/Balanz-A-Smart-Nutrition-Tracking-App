@@ -134,58 +134,70 @@ const DEFAULT_TAB_OPTIONS = {
 };
 
 // Pre-rendered components to avoid re-renders during navigation
+// Replace the existing MealStackNavigator with this optimized version:
 const MealStackNavigator = React.memo(() => {
   const stackNavigator = useMemo(() => (
     <Stack.Navigator 
       screenOptions={{
         ...DEFAULT_STACK_OPTIONS,
-        // Use faster transition for meal stack
-        cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+        // Remove problematic cardStyle that might interfere with scrolling
+        cardStyle: { backgroundColor: '#fff' }, // Solid background instead of transparent
+        // Disable animations for Breakfast to avoid scroll conflicts
+        animationEnabled: true,
+        gestureEnabled: true,
+        // Ensure proper scroll handling
+        headerShown: false,
       }}
-      // Optimize for performance
       initialRouteName="MealMain"
       headerMode="none"
     >
       <Stack.Screen 
         name="MealMain" 
         component={MealScreen}
-        options={INSTANT_TRANSITION}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forNoAnimation,
+          transitionSpec: {
+            open: { animation: 'timing', config: { duration: 0, useNativeDriver: true } },
+            close: { animation: 'timing', config: { duration: 0, useNativeDriver: true } },
+          },
+        }}
       />
       <Stack.Screen 
         name="Breakfast" 
         component={BreakfastScreen} 
         options={{
-          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+          // Use simpler transition that doesn't interfere with scrolling
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
           presentation: 'card',
           gestureEnabled: true,
-          gestureDirection: 'vertical',
+          gestureDirection: 'horizontal', // Changed from vertical to horizontal
           gestureResponseDistance: 50,
           gestureVelocityImpact: 0.3,
+          // Simplified transition config
           transitionSpec: {
             open: {
               animation: 'spring',
               config: {
-                stiffness: 1000,
-                damping: 500,
-                mass: 3,
-                overshootClamping: true,
-                restDisplacementThreshold: 0.01,
-                restSpeedThreshold: 0.01,
+                stiffness: 300, // Reduced stiffness
+                damping: 30,    // Reduced damping
+                mass: 1,        // Reduced mass
                 useNativeDriver: true,
               },
             },
             close: {
               animation: 'spring',
               config: {
-                stiffness: 1000,
-                damping: 500,
-                mass: 3,
-                overshootClamping: true,
-                restDisplacementThreshold: 0.01,
-                restSpeedThreshold: 0.01,
+                stiffness: 300,
+                damping: 30,
+                mass: 1,
                 useNativeDriver: true,
               },
             },
+          },
+          // Ensure no interference with scrolling
+          cardStyle: { 
+            backgroundColor: '#fff',
+            // Remove any overflow or transform styles that might block scroll
           },
         }}
       />
