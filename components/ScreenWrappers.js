@@ -34,24 +34,29 @@ export const MealWrapper = ({
   };
 
   return (
-    <LocationStyleHeader
-      title="Meals & Nutrition"
-      headerHeight={110}
-      profileImage={profileImage}
-      onProfilePress={handleProfilePress}
-      onNotificationPress={handleNotificationPress}
-      hasNotificationBadge={hasNotificationBadge}
-      backgroundColor="#FFF8E8"
-      titleColor="#333333"
-      subtitleColor="#666666"
-      gradientColors={['#FFF8E8', '#FFFFFF', '#F0F0F0']}
-      blurIntensity={100}
-      {...props}
-    >
-      <ScrollView style={styles.contentScrollWrapper}>
-        {children}
-      </ScrollView>
-    </LocationStyleHeader>
+    
+    <View style={{ flex: 1, backgroundColor: '#FFF8E8' }}>
+      <LocationStyleHeader
+        title="Meals & Nutrition"
+        headerHeight={110}
+        profileImage={profileImage}
+        onProfilePress={handleProfilePress}
+        onNotificationPress={handleNotificationPress}
+        hasNotificationBadge={hasNotificationBadge}
+        backgroundColor="#FFF8E8"
+        titleColor="#333333"
+        subtitleColor="#666666"
+        gradientColors={['#FFF8E8', '#FFFFFF', '#F0F0F0']}
+        blurIntensity={100}
+        {...props}
+      >
+        {/* REMOVE the ScrollView wrapper - this is causing the issue */}
+        <View style={styles.contentWrapper}>
+          {children}
+        </View>
+      </LocationStyleHeader>
+    </View>
+    
   );
 };
 
@@ -215,7 +220,7 @@ export const BreakfastWrapper = ({
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={{ flex: 1, backgroundColor: '#EDFDEE' }}>
       <LocationStyleHeader
         title="Breakfast"
         headerHeight={110}
@@ -252,4 +257,5 @@ const styles = StyleSheet.create({
     // Remove minHeight as it can cause issues
   },
   // Remove contentScrollWrapper as we're not using ScrollView anymore
+  
 });

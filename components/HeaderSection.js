@@ -9,7 +9,7 @@ const HeaderSection = ({ userName = "Priyangkush", onSearchPress, onNotification
             <View style={styles.topRow}>
                 <View style={styles.leftSection}>
                     <Text style={styles.greeting}>Hi {userName},</Text>
-                    <Text style={styles.subGreeting}>Welcome to Tasty!</Text>
+                    <Text style={styles.subGreeting}>Good Morning!</Text>
                 </View>
                 <View style={styles.rightSection}>
                     <TouchableOpacity style={styles.iconButton} onPress={onSearchPress}>
@@ -26,7 +26,7 @@ const HeaderSection = ({ userName = "Priyangkush", onSearchPress, onNotification
                     </TouchableOpacity>
                 </View>
             </View>
-            <Text style={styles.mainTitle}>Providing the best foods for you! 🍽️</Text>
+            <Text style={styles.mainTitle}>Providing the best healthy breakfast for you! 🍽️</Text>
         </View>
     );
 };

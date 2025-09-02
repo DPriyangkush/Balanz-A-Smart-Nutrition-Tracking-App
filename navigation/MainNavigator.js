@@ -34,6 +34,7 @@ const ProfileScreen = React.lazy(() => import("../screens/ProfileScreen"));
 const MealScreen = React.lazy(() => import("../screens/MealScreen"));
 const AIScreen = React.lazy(() => import("../screens/AIScreen"));
 const BreakfastScreen = React.lazy(() => import("screens/BreakfastScreen"));
+const MealDetailsScreen = React.lazy(() => import("screens/MealDetailsScreen"));
 
 // Components
 import BottomNav from "../components/BottomNav";
@@ -134,18 +135,15 @@ const DEFAULT_TAB_OPTIONS = {
 };
 
 // Pre-rendered components to avoid re-renders during navigation
-// Replace the existing MealStackNavigator with this optimized version:
+// Replace your existing MealStackNavigator with this updated version:
 const MealStackNavigator = React.memo(() => {
   const stackNavigator = useMemo(() => (
     <Stack.Navigator 
       screenOptions={{
         ...DEFAULT_STACK_OPTIONS,
-        // Remove problematic cardStyle that might interfere with scrolling
-        cardStyle: { backgroundColor: '#fff' }, // Solid background instead of transparent
-        // Disable animations for Breakfast to avoid scroll conflicts
+        cardStyle: { backgroundColor: '#fff' },
         animationEnabled: true,
         gestureEnabled: true,
-        // Ensure proper scroll handling
         headerShown: false,
       }}
       initialRouteName="MealMain"
@@ -166,21 +164,19 @@ const MealStackNavigator = React.memo(() => {
         name="Breakfast" 
         component={BreakfastScreen} 
         options={{
-          // Use simpler transition that doesn't interfere with scrolling
           cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
           presentation: 'card',
           gestureEnabled: true,
-          gestureDirection: 'horizontal', // Changed from vertical to horizontal
+          gestureDirection: 'horizontal',
           gestureResponseDistance: 50,
           gestureVelocityImpact: 0.3,
-          // Simplified transition config
           transitionSpec: {
             open: {
               animation: 'spring',
               config: {
-                stiffness: 300, // Reduced stiffness
-                damping: 30,    // Reduced damping
-                mass: 1,        // Reduced mass
+                stiffness: 300,
+                damping: 30,
+                mass: 1,
                 useNativeDriver: true,
               },
             },
@@ -194,10 +190,45 @@ const MealStackNavigator = React.memo(() => {
               },
             },
           },
-          // Ensure no interference with scrolling
           cardStyle: { 
             backgroundColor: '#fff',
-            // Remove any overflow or transform styles that might block scroll
+          },
+        }}
+      />
+      {/* Add the MealDetailsScreen here */}
+      <Stack.Screen 
+        name="MealDetails" 
+        component={MealDetailsScreen}
+        options={{
+          // Use a modal-like vertical transition for meal details
+          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+          presentation: 'modal',
+          gestureEnabled: true,
+          gestureDirection: 'vertical',
+          gestureResponseDistance: 200,
+          gestureVelocityImpact: 0.3,
+          transitionSpec: {
+            open: {
+              animation: 'spring',
+              config: {
+                stiffness: 200,
+                damping: 35,
+                mass: 1,
+                useNativeDriver: true,
+              },
+            },
+            close: {
+              animation: 'spring',
+              config: {
+                stiffness: 200,
+                damping: 35,
+                mass: 1,
+                useNativeDriver: true,
+              },
+            },
+          },
+          cardStyle: { 
+            backgroundColor: '#fff',
           },
         }}
       />

@@ -1,230 +1,133 @@
-// SunriseSunLensUltraOptimized.js - Skia-level Performance with SVG
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import { View, Dimensions } from "react-native";
-import Svg, {
-  Defs,
-  RadialGradient,
-  LinearGradient,
-  Stop,
-  Circle,
-  Path,
-  Mask,
-  Rect,
-  G,
-} from "react-native-svg";
+// SunriseSunLensUltraReanimated.js
+import React, { memo, useEffect, useMemo } from "react";
+import { View, Dimensions, StyleSheet } from "react-native";
+import Svg, { Defs, RadialGradient, Stop, Circle, Path, Rect } from "react-native-svg";
 import Animated, {
   useSharedValue,
   useAnimatedProps,
+  withTiming,
   withRepeat,
   withSequence,
-  withTiming,
-  interpolate,
   Easing,
-  useDerivedValue,
-  runOnUI,
   cancelAnimation,
+  interpolate,
+  useFrameCallback,
 } from "react-native-reanimated";
+import LinearGradient from "react-native-svg";
 
 const { width: W, height: H } = Dimensions.get("window");
-
-// Pre-create animated components with display names for better performance
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-AnimatedCircle.displayName = 'AnimatedCircle';
+const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
-// Performance constants - optimized for 60fps
-const PERF_CONFIG = {
-  RISE_DURATION: 3200, // Slightly faster for snappier feel
-  BREATHING_DURATION: 1600, // Reduced for smoother breathing
-  SHIMMER_DURATION: 2400, // Separate shimmer timing
-  SUN_BASE_RADIUS: 60,
-  SUN_BREATHING_RANGE: 8, // More pronounced breathing
-  GLOW_BASE_RADIUS: 115,
-  GLOW_PULSE_RANGE: 12,
-  FLOAT_AMPLITUDE: 2.5, // Subtle floating motion
-};
-
-const SunriseSunLensUltra = React.memo(({ 
+const SunriseSunLensUltraReanimated = React.memo(({ 
   width = W, 
   height = Math.min(H * 0.6, 400),
   autoStart = true,
 }) => {
-  // High-performance shared values
+  // Shared values for animations
   const masterProgress = useSharedValue(0);
-  const breathingCycle = useSharedValue(0);
-  const shimmerCycle = useSharedValue(0);
-  const clockTime = useSharedValue(0);
+  const breathingProgress = useSharedValue(0);
+  const time = useSharedValue(0);
   
-  const animationRef = useRef(null);
-  const isUnmounted = useRef(false);
-
-  // Ultra-optimized layout calculations - computed once
-  const layout = useMemo(() => {
+  // Pre-calculate layout values - useMemo for performance
+  const { centerX, sunStartY, sunEndY, arcPath, flarePositions } = useMemo(() => {
     const centerX = width * 0.5;
     const sunStartY = height + 100;
-    const sunEndY = height * 0.4; // Slightly higher for better visibility
-    const arcCurveY = height * 1.25; // More pronounced curve
+    const sunEndY = height * 0.4;
+    const arcPath = `M0,${height} Q${centerX},${height * 1.25} ${width},${height} L${width},${height} L0,${height} Z`;
     
-    return {
-      centerX,
-      sunStartY,
-      sunEndY,
-      glowEndY: height * 0.42,
-      arcPath: `M0,${height} Q${centerX},${arcCurveY} ${width},${height} L${width},${height} L0,${height} Z`,
-      // Pre-calculate lens flare positions for static rendering
-      flarePositions: [
-        { cx: width * 0.28, cy: height * 0.32, r: 24, opacity: 0.16 },
-        { cx: width * 0.72, cy: height * 0.38, r: 19, opacity: 0.13 },
-        { cx: width * 0.22, cy: height * 0.62, r: 16, opacity: 0.11 },
-        { cx: width * 0.78, cy: height * 0.28, r: 14, opacity: 0.09 },
-      ],
-    };
+    const flarePositions = [
+      { cx: width * 0.28, cy: height * 0.32, r: 24, opacity: 0.16 },
+      { cx: width * 0.72, cy: height * 0.38, r: 19, opacity: 0.13 },
+      { cx: width * 0.22, cy: height * 0.62, r: 16, opacity: 0.11 },
+      { cx: width * 0.78, cy: height * 0.28, r: 14, opacity: 0.09 },
+    ];
+
+    return { centerX, sunStartY, sunEndY, arcPath, flarePositions };
   }, [width, height]);
 
-  // High-precision clock for ultra-smooth effects
-  const startHighPrecisionClock = useCallback(() => {
-    const startTime = performance.now();
-    
-    const updateClock = () => {
-      if (isUnmounted.current) return;
-      
-      clockTime.value = performance.now() - startTime;
-      animationRef.current = requestAnimationFrame(updateClock);
-    };
-    
-    animationRef.current = requestAnimationFrame(updateClock);
-  }, [clockTime]);
+  // High-performance frame callback for smooth animations
+  useFrameCallback((frameInfo) => {
+    'worklet';
+    time.value = frameInfo.timeSinceFirstFrame;
+  }, autoStart);
 
-  // Ultra-smooth animation setup
+  // Start animations
   useEffect(() => {
     if (!autoStart) return;
 
-    // Start high-precision clock immediately
-    startHighPrecisionClock();
+    masterProgress.value = withTiming(1, {
+      duration: 3200,
+      easing: Easing.bezier(0.25, 0.46, 0.45, 0.94),
+    });
 
-    // Staggered animation start for natural feel
-    const startAnimations = () => {
-      // Main rise animation with custom bezier curve
-      masterProgress.value = withTiming(1, {
-        duration: PERF_CONFIG.RISE_DURATION,
-        easing: Easing.bezier(0.25, 0.46, 0.45, 0.94), // Custom easing for natural motion
-      });
-
-      // Delayed breathing animation for realism
-      setTimeout(() => {
-        breathingCycle.value = withRepeat(
-          withSequence(
-            withTiming(1, {
-              duration: PERF_CONFIG.BREATHING_DURATION,
-              easing: Easing.bezier(0.37, 0, 0.63, 1), // Smooth in-out
-            }),
-            withTiming(0, {
-              duration: PERF_CONFIG.BREATHING_DURATION,
-              easing: Easing.bezier(0.37, 0, 0.63, 1),
-            })
-          ),
-          -1,
-          true
-        );
-      }, PERF_CONFIG.RISE_DURATION * 0.7);
-
-      // Shimmer effect with different timing
-      setTimeout(() => {
-        shimmerCycle.value = withRepeat(
-          withTiming(1, {
-            duration: PERF_CONFIG.SHIMMER_DURATION,
-            easing: Easing.bezier(0.45, 0, 0.55, 1),
-          }),
-          -1,
-          true
-        );
-      }, PERF_CONFIG.RISE_DURATION * 0.5);
-    };
-
-    // Micro-delay for smoother start
-    setTimeout(startAnimations, 100);
+    breathingProgress.value = withRepeat(
+      withSequence(
+        withTiming(1, { 
+          duration: 1600, 
+          easing: Easing.bezier(0.37, 0, 0.63, 1) 
+        }),
+        withTiming(0, { 
+          duration: 1600, 
+          easing: Easing.bezier(0.37, 0, 0.63, 1) 
+        })
+      ),
+      -1,
+      true
+    );
 
     return () => {
-      isUnmounted.current = true;
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
       cancelAnimation(masterProgress);
-      cancelAnimation(breathingCycle);
-      cancelAnimation(shimmerCycle);
+      cancelAnimation(breathingProgress);
     };
-  }, [autoStart, masterProgress, breathingCycle, shimmerCycle, startHighPrecisionClock]);
+  }, [autoStart]);
 
-  // Ultra-optimized derived values with minimal calculations
-  const sunPosition = useDerivedValue(() => {
-    const baseY = interpolate(
-      masterProgress.value,
-      [0, 1],
-      [layout.sunStartY, layout.sunEndY]
-    );
+  // Animated props using Reanimated's worklet functions
+  const sunAnimatedProps = useAnimatedProps(() => {
+    'worklet';
+    const progress = masterProgress.value;
+    const breathing = breathingProgress.value;
     
-    // Subtle floating motion using high-precision clock
-    const floatOffset = Math.sin(clockTime.value * 0.0008) * PERF_CONFIG.FLOAT_AMPLITUDE;
-    
-    return baseY + floatOffset;
-  }, [masterProgress, clockTime, layout]);
-
-  const sunRadius = useDerivedValue(() => {
-    // Base radius with growth
-    const baseRadius = interpolate(
-      masterProgress.value,
-      [0, 1],
-      [PERF_CONFIG.SUN_BASE_RADIUS - 8, PERF_CONFIG.SUN_BASE_RADIUS]
-    );
-    
-    // Breathing effect
-    const breathingOffset = interpolate(
-      breathingCycle.value,
-      [0, 1],
-      [0, PERF_CONFIG.SUN_BREATHING_RANGE]
-    );
-    
-    // Shimmer using high-precision timing
-    const shimmerOffset = Math.sin(clockTime.value * 0.0012) * 1.2;
-    
-    return Math.max(baseRadius + breathingOffset + shimmerOffset, 45);
-  }, [masterProgress, breathingCycle, clockTime]);
-
-  const glowProps = useDerivedValue(() => {
-    const baseRadius = interpolate(
-      masterProgress.value,
-      [0, 1],
-      [PERF_CONFIG.GLOW_BASE_RADIUS - 15, PERF_CONFIG.GLOW_BASE_RADIUS]
-    );
-    
-    const pulseOffset = Math.sin(clockTime.value * 0.0009) * PERF_CONFIG.GLOW_PULSE_RANGE;
-    const breathingOffset = interpolate(breathingCycle.value, [0, 1], [0, 6]);
-    
-    const radius = baseRadius + pulseOffset + breathingOffset;
-    const opacity = interpolate(masterProgress.value, [0, 1], [0.2, 0.65]);
-    const dynamicOpacity = opacity + Math.sin(clockTime.value * 0.0007) * 0.08;
+    const y = interpolate(progress, [0, 1], [sunStartY, sunEndY]);
+    const baseRadius = interpolate(progress, [0, 1], [52, 60]);
+    const breathingRadius = interpolate(breathing, [0, 1], [0, 8]);
+    const floatOffset = Math.sin(time.value * 0.0008) * 2.5;
     
     return {
-      r: Math.max(radius, 85),
-      opacity: Math.max(Math.min(dynamicOpacity, 0.75), 0.15),
+      cy: y + floatOffset,
+      r: baseRadius + breathingRadius,
     };
-  }, [masterProgress, breathingCycle, clockTime]);
+  });
 
-  // Memoized animated props with minimal object creation
-  const sunAnimatedProps = useAnimatedProps(() => ({
-    r: sunRadius.value,
-    cy: sunPosition.value,
-  }), [sunRadius, sunPosition]);
+  const glowAnimatedProps = useAnimatedProps(() => {
+    'worklet';
+    const progress = masterProgress.value;
+    const breathing = breathingProgress.value;
+    
+    const opacity = interpolate(progress, [0, 1], [0.2, 0.65]);
+    const baseRadius = interpolate(progress, [0, 1], [100, 115]);
+    const breathingRadius = interpolate(breathing, [0, 1], [0, 12]);
+    const pulseRadius = Math.sin(time.value * 0.0009) * 8;
+    
+    return {
+      r: baseRadius + breathingRadius + pulseRadius,
+      opacity: opacity + Math.sin(time.value * 0.0007) * 0.08,
+    };
+  });
 
-  const glowAnimatedProps = useAnimatedProps(() => ({
-    r: glowProps.value.r,
-    cy: sunPosition.value,
-    opacity: glowProps.value.opacity,
-  }), [glowProps, sunPosition]);
+  const skyAnimatedProps = useAnimatedProps(() => {
+    'worklet';
+    const progress = masterProgress.value;
+    const opacity = interpolate(progress, [0, 1], [0.1, 0.3]);
+    
+    return {
+      opacity,
+    };
+  });
 
-  // Ultra-realistic gradient definitions - memoized for performance
+  // Memoize static elements to prevent re-renders
   const gradientDefs = useMemo(() => (
     <Defs>
-      {/* Ultra-realistic 10-stop sun gradient */}
       <RadialGradient id="ultraSunCore" cx="45%" cy="40%" r="60%">
         <Stop offset="0" stopColor="#FFFFFF" stopOpacity="1" />
         <Stop offset="0.15" stopColor="#FFFEF7" stopOpacity="1" />
@@ -238,7 +141,6 @@ const SunriseSunLensUltra = React.memo(({
         <Stop offset="1" stopColor="rgba(255,120,0,0)" stopOpacity="0" />
       </RadialGradient>
 
-      {/* Dynamic atmosphere glow with multiple layers */}
       <RadialGradient id="dynamicAtmosphere" cx="50%" cy="50%" r="50%">
         <Stop offset="0" stopColor="rgba(255,240,220,0.75)" stopOpacity="0.75" />
         <Stop offset="0.2" stopColor="rgba(255,220,180,0.6)" stopOpacity="0.6" />
@@ -248,15 +150,6 @@ const SunriseSunLensUltra = React.memo(({
         <Stop offset="1" stopColor="rgba(255,120,40,0)" stopOpacity="0" />
       </RadialGradient>
 
-      {/* Corona effect */}
-      <RadialGradient id="coronaEffect" cx="50%" cy="50%" r="70%">
-        <Stop offset="0" stopColor="rgba(255,255,255,0.4)" stopOpacity="0.4" />
-        <Stop offset="0.3" stopColor="rgba(255,250,235,0.3)" stopOpacity="0.3" />
-        <Stop offset="0.6" stopColor="rgba(255,235,200,0.2)" stopOpacity="0.2" />
-        <Stop offset="1" stopColor="rgba(255,220,180,0)" stopOpacity="0" />
-      </RadialGradient>
-
-      {/* Premium lens flare */}
       <RadialGradient id="premiumFlare" cx="50%" cy="50%" r="50%">
         <Stop offset="0" stopColor="rgba(255,255,245,0.6)" stopOpacity="0.6" />
         <Stop offset="0.4" stopColor="rgba(255,245,220,0.4)" stopOpacity="0.4" />
@@ -264,7 +157,6 @@ const SunriseSunLensUltra = React.memo(({
         <Stop offset="1" stopColor="rgba(255,215,160,0)" stopOpacity="0" />
       </RadialGradient>
 
-      {/* Enhanced ground gradient */}
       <LinearGradient id="premiumGround" x1="0" y1="0" x2="0" y2="1">
         <Stop offset="0%" stopColor="#FF7A47" stopOpacity="1" />
         <Stop offset="20%" stopColor="#FF8C59" stopOpacity="1" />
@@ -273,18 +165,12 @@ const SunriseSunLensUltra = React.memo(({
         <Stop offset="80%" stopColor="#D6640F" stopOpacity="1" />
         <Stop offset="100%" stopColor="#C55500" stopOpacity="1" />
       </LinearGradient>
-
-      {/* Optimized mask */}
-      <Mask id="sunMask">
-        <Rect width={width} height={height} fill="white" />
-        <Path d={layout.arcPath} fill="black" />
-      </Mask>
     </Defs>
-  ), [width, height, layout.arcPath]);
+  ), []);
 
-  // Static lens flares - rendered once for performance
+  // Memoize static lens flares
   const staticFlares = useMemo(() => 
-    layout.flarePositions.map((flare, index) => (
+    flarePositions.map((flare, index) => (
       <Circle
         key={`flare-${index}`}
         cx={flare.cx}
@@ -293,78 +179,64 @@ const SunriseSunLensUltra = React.memo(({
         fill="url(#premiumFlare)"
         opacity={flare.opacity}
       />
-    )), [layout.flarePositions]);
+    )), [flarePositions]);
 
-  // Optimized container style
-  const containerStyle = useMemo(() => ({
-    width,
-    height,
-    backgroundColor: "#FFF8E8",
-    borderBottomEndRadius: width * 0.5,
-    borderBottomStartRadius: width * 0.5,
-    overflow: 'hidden',
-  }), [width, height]);
+  // Memoize container style
+  const containerStyle = useMemo(() => [
+    styles.container, 
+    { width, height }
+  ], [width, height]);
 
   return (
     <View style={containerStyle}>
-      <Svg width={width} height={height} style={{ backgroundColor: 'transparent' }}>
+      <Svg width={width} height={height}>
         {gradientDefs}
         
-        {/* Sky background with subtle gradient */}
-        <Rect 
-          x={0} 
-          y={0} 
-          width={width} 
+        {/* Animated sky background */}
+        <AnimatedRect
+          x={0}
+          y={0}
+          width={width}
           height={height * 0.75}
-          fill="rgba(255,248,240,0.3)"
+          fill="rgba(255,248,240)"
+          animatedProps={skyAnimatedProps}
         />
         
-        <G mask="url(#sunMask)">
-          {/* Outer atmosphere glow - animated */}
-          <AnimatedCircle
-            cx={layout.centerX}
-            fill="url(#dynamicAtmosphere)"
-            animatedProps={glowAnimatedProps}
-          />
+        {/* Atmosphere glow */}
+        <AnimatedCircle
+          cx={centerX}
+          cy={sunEndY}
+          fill="url(#dynamicAtmosphere)"
+          animatedProps={glowAnimatedProps}
+        />
 
-          {/* Corona effect layer */}
-          <AnimatedCircle
-            cx={layout.centerX}
-            cy={sunPosition}
-            r={sunRadius}
-            fill="url(#coronaEffect)"
-            opacity={0.6}
-            transform={`scale(1.3)`}
-          />
+        {/* Sun body */}
+        <AnimatedCircle
+          cx={centerX}
+          fill="url(#ultraSunCore)"
+          animatedProps={sunAnimatedProps}
+        />
 
-          {/* Main sun body - ultra-realistic */}
-          <AnimatedCircle
-            cx={layout.centerX}
-            fill="url(#ultraSunCore)"
-            animatedProps={sunAnimatedProps}
-          />
+        {/* Static lens flares */}
+        {staticFlares}
 
-          {/* Static lens flares */}
-          {staticFlares}
-
-          {/* Dynamic highlight for 3D effect */}
-          <AnimatedCircle
-            cx={layout.centerX - 15}
-            cy={sunPosition}
-            r={sunRadius}
-            fill="rgba(255,255,255,0.25)"
-            opacity={0.4}
-            transform={`translate(-8, -8) scale(0.6)`}
-          />
-        </G>
-
-        {/* Ground arc with premium gradient */}
-        <Path d={layout.arcPath} fill="url(#premiumGround)" />
+        {/* Ground arc */}
+        <Path d={arcPath} fill="url(#premiumGround)" />
       </Svg>
     </View>
   );
 });
 
-SunriseSunLensUltra.displayName = 'SunriseSunLensUltra';
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: "#FFF8E8",
+    borderBottomEndRadius: W * 0.5,
+    borderBottomStartRadius: W * 0.5,
+    overflow: 'hidden',
+  },
+});
 
-export default SunriseSunLensUltra;
+// Add display name for better debugging
+SunriseSunLensUltraReanimated.displayName = 'SunriseSunLensUltraReanimated';
+
+export default SunriseSunLensUltraReanimated;

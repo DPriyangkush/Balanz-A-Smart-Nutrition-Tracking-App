@@ -1,4 +1,4 @@
-// BreakfastScreen.js - Fixed scrolling without changing layout
+// BreakfastScreen.js - Fixed scrolling with navigation to MealDetailsScreen
 import React, { memo, useMemo } from "react";
 import {
     View,
@@ -21,7 +21,7 @@ import FoodCardsGrid from "components/BreakfastRecommendedCards";
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 // Memoize the component to prevent unnecessary re-renders
-const BreakfastScreen = memo(() => {
+const BreakfastScreen = memo(({ navigation }) => {
     // Memoize StatusBar props to prevent recreation
     const statusBarProps = useMemo(() => ({
         barStyle: "light-content",
@@ -51,9 +51,39 @@ const BreakfastScreen = memo(() => {
         Alert.alert("Categories", "View all categories");
     };
 
-    // Food cards handlers
+    // Food cards handlers - Updated to navigate to MealDetailsScreen
     const handleFoodItemPress = (item) => {
-        Alert.alert("Recipe", `Selected: ${item.name}`);
+        // Navigate to MealDetailsScreen with meal data
+        navigation.navigate('MealDetails', {
+            mealData: {
+                id: item.id,
+                name: item.name,
+                category: item.category || 'Breakfast',
+                prepTime: '5 min',
+                kcal: item.kcal,
+                protein: item.protein,
+                carbs: item.carbs,
+                fats: item.fats,
+                servings: 2,
+                image: item.image,
+                ingredients: [
+                    { quantity: '1 cup', item: 'Rolled oats' },
+                    { quantity: '2 cups', item: 'Water or milk' },
+                    { quantity: '1 tbsp', item: 'Honey or maple syrup' },
+                    { quantity: '1/4 cup', item: 'Fresh berries' },
+                    { quantity: '1 tbsp', item: 'Chia seeds (optional)' },
+                    { quantity: '1/4 tsp', item: 'Vanilla extract' },
+                ],
+                instructions: [
+                    'Bring water or milk to a boil in a medium saucepan.',
+                    'Add oats and reduce heat to medium-low.',
+                    'Cook for 5-7 minutes, stirring occasionally until creamy.',
+                    'Remove from heat and stir in sweetener and vanilla.',
+                    'Top with fresh berries, chia seeds, and serve hot.',
+                    'Add nuts or granola for extra crunch if desired.'
+                ]
+            }
+        });
     };
 
     const handleFoodCardsSeeAll = () => {
@@ -190,34 +220,13 @@ const BreakfastScreen = memo(() => {
                         end={{ x: 1, y: 0 }}
                         pointerEvents="none"
                     />
-
-                
                 </View>
 
-                
                 {/* Horizontal Food Cards Section */}
                 <FoodCardsGrid
                     onItemPress={handleFoodItemPress}
                     onSeeAllPress={handleFoodCardsSeeAll}
                 />
-               
-                
-                
-                
-                
-                {/* Test content for scrolling verification */}
-                <View style={styles.additionalContent}>
-                    <View style={styles.testCard}>
-                        <View style={styles.testItem} />
-                        <View style={styles.testItem} />
-                        <View style={styles.testItem} />
-                        <View style={styles.testItem} />
-                        <View style={styles.testItem} />
-                    </View>
-                </View>
-                
-                {/* Bottom padding to ensure scrolling */}
-                <View style={styles.bottomSpace} />
             </View>
         </BreakfastWrapper>
     );
@@ -235,6 +244,7 @@ const styles = StyleSheet.create({
         width: '100%',
         // Remove absolute positioning to allow natural flow
         overflow: 'hidden',
+        
     },
     contentSection: {
         backgroundColor: '#EDFDEE',
@@ -244,16 +254,8 @@ const styles = StyleSheet.create({
         marginTop: -25, // Overlap with background slightly
         // Remove any flex or height constraints
         paddingBottom: 20,
-        // Add subtle shadow
-        shadowColor: '#1e1e1e',
-        shadowOffset: {
-            width: 0,
-            height: -2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 5,
         paddingHorizontal: 10,
+        
     },
     additionalContent: {
         backgroundColor: '#f8f9fa',
@@ -284,7 +286,8 @@ const styles = StyleSheet.create({
         borderLeftColor: '#4CAF50',
     },
     bottomSpace: {
-        height: 400, // Substantial bottom space to ensure scrolling
+        height: 40, // Substantial bottom space to ensure scrolling
         backgroundColor: 'transparent',
+        
     },
 });
