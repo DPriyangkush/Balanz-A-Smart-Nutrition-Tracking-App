@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, Dimensions, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -26,6 +27,7 @@ const BottomNav = ({ state, descriptors, navigation }) => {
   const [activeTab, setActiveTab] = useState(0);
   const containerRef = useRef(null);
   const tabRefs = useRef([]);
+  const insets = useSafeAreaInsets();
   
   const pillLeft = useSharedValue(0);
   const pillWidth = useSharedValue(isSmallScreen ? 70 : 80);
@@ -117,7 +119,7 @@ const BottomNav = ({ state, descriptors, navigation }) => {
   });
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
       <BlurView intensity={100} tint="systemThickMaterialDark" style={styles.blurContainer}>
         <View 
           ref={containerRef}
@@ -176,13 +178,15 @@ const BottomNav = ({ state, descriptors, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
+    // Changed from bottom to use fixed positioning
     bottom: isSmallScreen ? 16 : 24,
     left: 0,
     right: 0,
     alignItems: 'center',
     zIndex: 50,
     paddingHorizontal: isSmallScreen ? 8 : 12,
-    
+    // Add elevation to ensure it stays on top
+    elevation: 1000,
   },
   blurContainer: {
     width: '100%',
@@ -192,7 +196,6 @@ const styles = StyleSheet.create({
     height: isSmallScreen ? 56 : 60,
     backgroundColor: "transparent",
     alignItems: 'center',
-    
   },
   navContainer: {
     width: '100%',
@@ -205,7 +208,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: isSmallScreen ? 6 : 8,
     overflow: 'hidden',
     position: 'relative',
-    
   },
   pill: {
     position: 'absolute',
