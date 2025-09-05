@@ -1,4 +1,4 @@
-// BreakfastScreen.js - Updated with PromoCarousel integration
+// BreakfastScreen.js - Production-optimized with buttery smooth animations
 import React, { 
     memo, 
     useMemo, 
@@ -26,18 +26,14 @@ import {
     UIManager,
 } from "react-native";
 import { LinearGradient } from 'expo-linear-gradient';
-import { BreakfastWrapper } from "../components/ScreenWrappers";
+import { BreakfastWrapper, SnacksWrapper } from "../components/ScreenWrappers";
 import HeaderSection from "../components/HeaderSection";
 import PromoCard from "../components/PromoCard";
 import NutritionCategories from "../components/NutritionCategories";
-import SunriseSunLensUltra from "../animatedScenes/SunriseScene";
+import EveningScene from "animatedScenes/EveningScene";
 import MealSearchInput from "../components/MealSearchInput";
 import FoodCardsGrid from "components/BreakfastRecommendedCards";
 import { MealService } from '../src/services/MealService';
-
-// Import the new promo components
-import PromoCarousel from '../components/PromoCarousel';
-import { promoManager, SAMPLE_USER_PROFILES, createUserProfile } from '../src/services/PromoDataManager';
 
 // Enable layout animations on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -47,11 +43,12 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 // Memoize screen dimensions outside component to prevent recalculation
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const SEARCH_DEBOUNCE_MS = 300;
-const ANIMATION_STAGGER_MS = 60;
-const MAX_RESULT_ANIMATIONS = 20;
+const ANIMATION_STAGGER_MS = 60; // Reduced for smoother feel
+const MAX_RESULT_ANIMATIONS = 20; // Limit for memory optimization
 
 // Animation configuration for production-level smoothness
 const ANIMATION_CONFIG = {
+    // Use higher tension/friction for snappier, more responsive animations
     SPRING: {
         tension: 150,
         friction: 12,
@@ -59,6 +56,7 @@ const ANIMATION_CONFIG = {
         restSpeedThreshold: 0.001,
         restDisplacementThreshold: 0.001,
     },
+    // Optimized timing for UI transitions
     TIMING_FAST: {
         duration: 200,
         useNativeDriver: true,
@@ -67,6 +65,7 @@ const ANIMATION_CONFIG = {
         duration: 300,
         useNativeDriver: true,
     },
+    // For search overlay transitions
     SEARCH_TRANSITION: {
         duration: 250,
         useNativeDriver: true,
@@ -79,26 +78,9 @@ const MemoizedPromoCard = memo(PromoCard);
 const MemoizedNutritionCategories = memo(NutritionCategories);
 const MemoizedFoodCardsGrid = memo(FoodCardsGrid);
 const MemoizedMealSearchInput = memo(MealSearchInput);
-const MemoizedPromoCarousel = memo(PromoCarousel);
 
 // Main component
-const BreakfastScreen = memo(({ navigation, route }) => {
-    // Get user profile from route params or create default
-    const userProfile = useMemo(() => {
-        if (route?.params?.userProfile) {
-            return route.params.userProfile;
-        }
-        
-        // Create a default user profile for breakfast lovers
-        return createUserProfile({
-            audience: ['health-conscious', 'busy-professionals'],
-            dietaryRestrictions: [],
-            budgetRange: [200, 800],
-            favoriteCategories: ['healthy', 'quick', 'energy'],
-            mealPreferences: { preferQuickMeals: true },
-        });
-    }, [route?.params?.userProfile]);
-
+const SnacksScreen = memo(({ navigation }) => {
     // Search state with better organization
     const [searchState, setSearchState] = useState({
         query: '',
@@ -108,19 +90,13 @@ const BreakfastScreen = memo(({ navigation, route }) => {
         error: null,
     });
 
-    // Promo state
-    const [promoState, setPromoState] = useState({
-        showPromoCarousel: true,
-        promoError: null,
-    });
-
     // Animation refs organized and optimized
     const animationRefs = useRef({
         contentOpacity: new Animated.Value(1),
         searchResultsOpacity: new Animated.Value(0),
-        searchResultsTranslateY: new Animated.Value(30),
-        searchResultsScale: new Animated.Value(0.98),
-        resultCards: [],
+        searchResultsTranslateY: new Animated.Value(30), // Reduced for subtlety
+        searchResultsScale: new Animated.Value(0.98), // Closer to 1 for smoother feel
+        resultCards: [], // Will be populated dynamically
     }).current;
 
     // Debounced search ref
@@ -146,72 +122,24 @@ const BreakfastScreen = memo(({ navigation, route }) => {
             horizontalPadding: safeHorizontalPadding,
             sectionSpacing: Math.min(Math.max(screenWidth * 0.03, 16), 20),
             gradientWidth: Math.min(Math.max(screenWidth * 0.08, 30), 60),
-            searchResultsTop: isTablet ? 450 : 470,
+            searchResultsTop: isTablet ? 450 : 500,
         };
-    }, []);
-
-    // Promo event handlers
-    const handlePromoPress = useCallback((promo, index) => {
-        console.log('Promo pressed:', promo.title, 'at index:', index);
-        
-        // Show detailed promo information
-        Alert.alert(
-            promo.title,
-            `${promo.subtitle}\n\n${promo.specialOffer || 'Special breakfast offer available!'}`,
-            [
-                { text: 'Maybe Later', style: 'cancel' },
-                { 
-                    text: promo.buttonText, 
-                    onPress: () => {
-                        // Navigate to a specific breakfast category or items
-                        // You can customize this based on the promo category
-                        if (promo.category === 'healthy') {
-                            // Navigate to healthy breakfast options
-                            console.log('Navigating to healthy breakfast options');
-                        } else if (promo.category === 'quick') {
-                            // Navigate to quick breakfast options
-                            console.log('Navigating to quick breakfast options');
-                        } else {
-                            // Default navigation
-                            console.log('Default promo action');
-                        }
-                    }
-                }
-            ]
-        );
-    }, []);
-
-    // Handle promo carousel errors
-    const handlePromoError = useCallback((error) => {
-        console.warn('Promo carousel error:', error);
-        setPromoState(prev => ({
-            ...prev,
-            promoError: error,
-            showPromoCarousel: false,
-        }));
-    }, []);
-
-    // Toggle promo carousel visibility
-    const togglePromoCarousel = useCallback(() => {
-        setPromoState(prev => ({
-            ...prev,
-            showPromoCarousel: !prev.showPromoCarousel,
-            promoError: null,
-        }));
     }, []);
 
     // Optimized result card animation initialization
     const initializeResultCardAnimations = useCallback((count) => {
         const actualCount = Math.min(count, MAX_RESULT_ANIMATIONS);
         
+        // Only create new animations if needed
         while (animationRefs.resultCards.length < actualCount) {
             animationRefs.resultCards.push({
-                translateY: new Animated.Value(40),
+                translateY: new Animated.Value(40), // Reduced for subtlety
                 opacity: new Animated.Value(0),
                 scale: new Animated.Value(0.95),
             });
         }
         
+        // Reset only the animations we'll use
         for (let i = 0; i < actualCount; i++) {
             const cardAnim = animationRefs.resultCards[i];
             cardAnim.translateY.setValue(40);
@@ -225,7 +153,9 @@ const BreakfastScreen = memo(({ navigation, route }) => {
         const actualCount = Math.min(results.length, MAX_RESULT_ANIMATIONS);
         initializeResultCardAnimations(actualCount);
 
+        // Use InteractionManager for better performance
         InteractionManager.runAfterInteractions(() => {
+            // Create all animations first, then start them together for better performance
             const animations = [];
             
             for (let i = 0; i < actualCount; i++) {
@@ -253,6 +183,7 @@ const BreakfastScreen = memo(({ navigation, route }) => {
                 );
             }
             
+            // Start all animations
             Animated.parallel(animations).start();
         });
     }, [initializeResultCardAnimations, animationRefs.resultCards]);
@@ -264,6 +195,7 @@ const BreakfastScreen = memo(({ navigation, route }) => {
             return;
         }
 
+        // Clear previous timeout
         if (searchTimeoutRef.current) {
             clearTimeout(searchTimeoutRef.current);
         }
@@ -281,6 +213,7 @@ const BreakfastScreen = memo(({ navigation, route }) => {
                 isSearching: false 
             }));
 
+            // Animate results
             if (filteredResults.length > 0) {
                 requestAnimationFrame(() => {
                     animateResultCards(filteredResults);
@@ -314,13 +247,14 @@ const BreakfastScreen = memo(({ navigation, route }) => {
     const enterSearchMode = useCallback(() => {
         setSearchState(prev => ({ ...prev, isSearchMode: true }));
 
+        // Parallel animations for smoother transition
         Animated.parallel([
             Animated.timing(animationRefs.contentOpacity, {
                 toValue: 0,
                 ...ANIMATION_CONFIG.TIMING_MEDIUM,
             }),
             Animated.sequence([
-                Animated.delay(150),
+                Animated.delay(150), // Start search results animation midway
                 Animated.parallel([
                     Animated.timing(animationRefs.searchResultsOpacity, {
                         toValue: 1,
@@ -342,6 +276,7 @@ const BreakfastScreen = memo(({ navigation, route }) => {
     const exitSearchMode = useCallback(() => {
         Keyboard.dismiss();
 
+        // Reverse animation sequence
         Animated.parallel([
             Animated.timing(animationRefs.searchResultsOpacity, {
                 toValue: 0,
@@ -356,10 +291,12 @@ const BreakfastScreen = memo(({ navigation, route }) => {
                 ...ANIMATION_CONFIG.TIMING_FAST,
             }),
         ]).start(() => {
+            // Fade in main content
             Animated.timing(animationRefs.contentOpacity, {
                 toValue: 1,
                 ...ANIMATION_CONFIG.TIMING_MEDIUM,
             }).start(() => {
+                // Clean up state
                 setSearchState({
                     query: '',
                     isSearchMode: false,
@@ -368,6 +305,7 @@ const BreakfastScreen = memo(({ navigation, route }) => {
                     error: null,
                 });
 
+                // Reset card animations
                 animationRefs.resultCards.forEach(anim => {
                     anim.translateY.setValue(40);
                     anim.opacity.setValue(0);
@@ -387,6 +325,7 @@ const BreakfastScreen = memo(({ navigation, route }) => {
             error: null,
         });
 
+        // Reset all animations instantly
         animationRefs.contentOpacity.setValue(1);
         animationRefs.searchResultsOpacity.setValue(0);
         animationRefs.searchResultsTranslateY.setValue(30);
@@ -429,7 +368,6 @@ const BreakfastScreen = memo(({ navigation, route }) => {
         foodCardsSeeAll: () => Alert.alert("Popular Recipes", "View all popular recipes"),
         itemPress: (item) => Alert.alert("Food Item", `Selected: ${item.name}`),
         recommendedSeeAll: () => Alert.alert("Recommended", "View all recommended items"),
-        // Legacy promo press handler for the old promo card
         promoPress: () => Alert.alert("Promo", "New recipe promotion activated!"),
     }), []);
 
@@ -495,6 +433,7 @@ const BreakfastScreen = memo(({ navigation, route }) => {
 
     // Optimized search result renderer
     const renderSearchResult = useCallback(({ item, index }) => {
+        // Only render up to max limit
         if (index >= MAX_RESULT_ANIMATIONS) return null;
         
         const cardAnimation = animationRefs.resultCards[index];
@@ -517,7 +456,7 @@ const BreakfastScreen = memo(({ navigation, route }) => {
                 <TouchableOpacity
                     style={styles.resultCardContent}
                     onPress={() => handleMealPress(item)}
-                    activeOpacity={0.85}
+                    activeOpacity={0.85} // Slightly higher for better feedback
                 >
                     <View style={styles.resultImageContainer}>
                         <View style={styles.resultImagePlaceholder} />
@@ -655,69 +594,24 @@ const BreakfastScreen = memo(({ navigation, route }) => {
     }, [navigation, searchState.isSearchMode, resetToMainScreen]);
 
     return (
-        <BreakfastWrapper>
+        <SnacksWrapper>
             <StatusBar {...statusBarProps} />
             
             <View style={styles.backgroundSection}>
-                <SunriseSunLensUltra />
+                <EveningScene />
             </View>
             
             <View style={responsiveStyles.contentSection}>
                 <MemoizedHeaderSection />
 
-                {/* Enhanced Promo Section with Toggle */}
                 <View style={styles.promoSection}>
-                    {promoState.showPromoCarousel ? (
-                        <View style={styles.promoCarouselContainer}>
-                            <MemoizedPromoCarousel
-                                mealType="breakfast" // Force breakfast promos
-                                userProfile={userProfile}
-                                autoRotate={true}
-                                rotationInterval={5000}
-                                showControls={true}
-                                showMealTypeSelector={false} // Hide meal type selector for focused breakfast experience
-                                onPromoPress={handlePromoPress}
-                                maxPromos={3} // Limit to 3 promos for better performance
-                                style={styles.promoCarouselStyle}
-                            />
-                            
-                            
-                        </View>
-                    ) : (
-                        <View style={styles.promoFallbackContainer}>
-                            {promoState.promoError ? (
-                                <View style={styles.promoErrorContainer}>
-                                    <Text style={styles.promoErrorText}>
-                                        Promotions temporarily unavailable
-                                    </Text>
-                                    <TouchableOpacity
-                                        style={styles.promoToggleButton}
-                                        onPress={togglePromoCarousel}
-                                    >
-                                        <Text style={styles.promoToggleText}>Try Again</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            ) : (
-                                <View style={styles.promoSimpleContainer}>
-                                    {/* Fallback to your original promo card */}
-                                    <MemoizedPromoCard 
-                                        title="New recipe"
-                                        subtitle="When you order $20+, you'll automatically get applied."
-                                        buttonText="Lets Cook"
-                                        onPress={handlers.promoPress}
-                                        imageSource="https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=200&h=150&fit=crop"
-                                    />
-                                    
-                                    <TouchableOpacity
-                                        style={styles.promoToggleButton}
-                                        onPress={togglePromoCarousel}
-                                    >
-                                        <Text style={styles.promoToggleText}>Show Smart Promos</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            )}
-                        </View>
-                    )}
+                    <MemoizedPromoCard 
+                        title="New recipe"
+                        subtitle="When you order $20+, you'll automatically get applied."
+                        buttonText="Lets Cook"
+                        onPress={handlers.promoPress}
+                        imageSource="https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=200&h=150&fit=crop"
+                    />
                 </View>
                 
                 <View style={styles.inputSection}>
@@ -803,13 +697,13 @@ const BreakfastScreen = memo(({ navigation, route }) => {
                     </View>
                 </Animated.View>
             </View>
-        </BreakfastWrapper>
+        </SnacksWrapper>
     );
 });
 
-BreakfastScreen.displayName = 'BreakfastScreen';
+SnacksScreen.displayName = 'SnacksScreen';
 
-export default BreakfastScreen;
+export default SnacksScreen;
 
 // Optimized styles for maximum performance
 const styles = StyleSheet.create({
@@ -818,50 +712,9 @@ const styles = StyleSheet.create({
         width: '100%',
         overflow: 'hidden',
     },
-    
-    promoCarouselContainer: {
-        position: 'relative',
-    },
-    promoCarouselStyle: {
-        minHeight: 100,
-        maxHeight: 200,
-        marginHorizontal: -10,
-    },
-    promoToggleButton: {
-        alignSelf: 'center',
+    promoSection: {
         marginTop: 10,
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#E0E0E0',
-    },
-    promoToggleText: {
-        fontSize: 12,
-        color: '#666',
-        fontWeight: '500',
-    },
-    promoFallbackContainer: {
-        minHeight: 120,
-    },
-    promoErrorContainer: {
-        alignItems: 'center',
-        padding: 20,
-        backgroundColor: '#FFF8F0',
-        borderRadius: 15,
-        borderWidth: 1,
-        borderColor: '#FFE4B5',
-    },
-    promoErrorText: {
-        fontSize: 14,
-        color: '#CC6600',
-        textAlign: 'center',
-        marginBottom: 10,
-        fontWeight: '500',
-    },
-    promoSimpleContainer: {
-        position: 'relative',
+        marginBottom: 5,
     },
     inputSection: {
         paddingHorizontal: 5,

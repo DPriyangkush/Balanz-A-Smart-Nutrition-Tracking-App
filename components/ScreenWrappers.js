@@ -244,6 +244,162 @@ export const BreakfastWrapper = ({
   );
 };
 
+// Also update your BreakfastWrapper in ScreenWrappers to ensure better scrolling:
+export const LunchWrapper = ({ 
+  children, 
+  profileImage = null,
+  onProfilePress = null,
+  onNotificationPress = null,
+  hasNotificationBadge = false,
+  ...props 
+}) => {
+  const navigation = useNavigation();
+
+  const handleProfilePress = () => {
+    if (onProfilePress) {
+      onProfilePress();
+    } else {
+      navigation.navigate('Profile');
+    }
+  };
+
+  const handleNotificationPress = () => {
+    if (onNotificationPress) {
+      onNotificationPress();
+    } else {
+      Alert.alert("Notifications", "No new notifications");
+    }
+  };
+
+  return (
+    <View style={{ flex: 1, backgroundColor: '#EDFDEE' }}>
+      <LocationStyleHeader
+        title="Lunch"
+        headerHeight={110}
+        profileImage={profileImage}
+        onProfilePress={handleProfilePress}
+        onNotificationPress={handleNotificationPress}
+        hasNotificationBadge={hasNotificationBadge}
+        backgroundColor="#FFF8E8"
+        titleColor="#333333"
+        subtitleColor="#666666"
+        gradientColors={['#FFF8E8', '#FFFFFF', '#F0F0F0']}
+        blurIntensity={100}
+        {...props}
+      >
+        {/* REMOVE the ScrollView wrapper - this is causing the issue */}
+        <View style={styles.contentWrapper}>
+          {children}
+        </View>
+      </LocationStyleHeader>
+    </View>
+  );
+};
+
+// Also update your BreakfastWrapper in ScreenWrappers to ensure better scrolling:
+export const SnacksWrapper = ({ 
+  children, 
+  profileImage = null,
+  onProfilePress = null,
+  onNotificationPress = null,
+  hasNotificationBadge = false,
+  ...props 
+}) => {
+  const navigation = useNavigation();
+
+  const handleProfilePress = () => {
+    if (onProfilePress) {
+      onProfilePress();
+    } else {
+      navigation.navigate('Profile');
+    }
+  };
+
+  const handleNotificationPress = () => {
+    if (onNotificationPress) {
+      onNotificationPress();
+    } else {
+      Alert.alert("Notifications", "No new notifications");
+    }
+  };
+
+  return (
+    <View style={{ flex: 1, backgroundColor: '#EDFDEE' }}>
+      <LocationStyleHeader
+        title="Snacks"
+        headerHeight={110}
+        profileImage={profileImage}
+        onProfilePress={handleProfilePress}
+        onNotificationPress={handleNotificationPress}
+        hasNotificationBadge={hasNotificationBadge}
+        backgroundColor="#FFF8E8"
+        titleColor="#333333"
+        subtitleColor="#666666"
+        gradientColors={['#FFF8E8', '#FFFFFF', '#F0F0F0']}
+        blurIntensity={100}
+        {...props}
+      >
+        {/* REMOVE the ScrollView wrapper - this is causing the issue */}
+        <View style={styles.contentWrapper}>
+          {children}
+        </View>
+      </LocationStyleHeader>
+    </View>
+  );
+};
+
+// Also update your BreakfastWrapper in ScreenWrappers to ensure better scrolling:
+export const DinnerWrapper = ({ 
+  children, 
+  profileImage = null,
+  onProfilePress = null,
+  onNotificationPress = null,
+  hasNotificationBadge = false,
+  ...props 
+}) => {
+  const navigation = useNavigation();
+
+  const handleProfilePress = () => {
+    if (onProfilePress) {
+      onProfilePress();
+    } else {
+      navigation.navigate('Profile');
+    }
+  };
+
+  const handleNotificationPress = () => {
+    if (onNotificationPress) {
+      onNotificationPress();
+    } else {
+      Alert.alert("Notifications", "No new notifications");
+    }
+  };
+
+  return (
+    <View style={{ flex: 1, backgroundColor: '#EDFDEE' }}>
+      <LocationStyleHeader
+        title="Dinner"
+        headerHeight={110}
+        profileImage={profileImage}
+        onProfilePress={handleProfilePress}
+        onNotificationPress={handleNotificationPress}
+        hasNotificationBadge={hasNotificationBadge}
+        backgroundColor="#0B1426"
+        titleColor="#fff" 
+        subtitleColor="#fff"
+        gradientColors={['#0F3460', '#16213E', '#1A1A2E']}
+        blurIntensity={100}
+        {...props}
+      >
+        {/* REMOVE the ScrollView wrapper - this is causing the issue */}
+        <View style={styles.contentWrapper}>
+          {children}
+        </View>
+      </LocationStyleHeader>
+    </View>
+  );
+};
+
 // Updated styles
 const styles = StyleSheet.create({
   contentWrapper: {

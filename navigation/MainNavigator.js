@@ -35,11 +35,15 @@ const MealScreen = React.lazy(() => import("../screens/MealScreen"));
 const AIScreen = React.lazy(() => import("../screens/AIScreen"));
 const BreakfastScreen = React.lazy(() => import("screens/BreakfastScreen"));
 const MealDetailsScreen = React.lazy(() => import("screens/MealDetailsScreen"));
+const SnacksScreen = React.lazy(() => import("screens/SnacksScreen"));
+const LunchScreen = React.lazy(() => import("screens/LunchScreen"));
+const DinnerScreen = React.lazy(() => import("screens/DinnerScreen"));
 
 // Components
 import BottomNav from "../components/BottomNav";
 import FrostedHeader from "../components/FrostedHeader";
 import { BackButton } from "../components/BackButton";
+
 
 // Create navigators with optimized configurations
 const Stack = createStackNavigator();
@@ -163,6 +167,111 @@ const MealStackNavigator = React.memo(() => {
       <Stack.Screen 
         name="Breakfast" 
         component={BreakfastScreen} 
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          presentation: 'card',
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+          gestureResponseDistance: 50,
+          gestureVelocityImpact: 0.3,
+          transitionSpec: {
+            open: {
+              animation: 'spring',
+              config: {
+                stiffness: 300,
+                damping: 30,
+                mass: 1,
+                useNativeDriver: true,
+              },
+            },
+            close: {
+              animation: 'spring',
+              config: {
+                stiffness: 300,
+                damping: 30,
+                mass: 1,
+                useNativeDriver: true,
+              },
+            },
+          },
+          cardStyle: { 
+            backgroundColor: '#fff',
+          },
+        }}
+      />
+      <Stack.Screen 
+        name="Lunch" 
+        component={LunchScreen} 
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          presentation: 'card',
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+          gestureResponseDistance: 50,
+          gestureVelocityImpact: 0.3,
+          transitionSpec: {
+            open: {
+              animation: 'spring',
+              config: {
+                stiffness: 300,
+                damping: 30,
+                mass: 1,
+                useNativeDriver: true,
+              },
+            },
+            close: {
+              animation: 'spring',
+              config: {
+                stiffness: 300,
+                damping: 30,
+                mass: 1,
+                useNativeDriver: true,
+              },
+            },
+          },
+          cardStyle: { 
+            backgroundColor: '#fff',
+          },
+        }}
+      />
+      <Stack.Screen 
+        name="Snacks" 
+        component={SnacksScreen} 
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          presentation: 'card',
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+          gestureResponseDistance: 50,
+          gestureVelocityImpact: 0.3,
+          transitionSpec: {
+            open: {
+              animation: 'spring',
+              config: {
+                stiffness: 300,
+                damping: 30,
+                mass: 1,
+                useNativeDriver: true,
+              },
+            },
+            close: {
+              animation: 'spring',
+              config: {
+                stiffness: 300,
+                damping: 30,
+                mass: 1,
+                useNativeDriver: true,
+              },
+            },
+          },
+          cardStyle: { 
+            backgroundColor: '#fff',
+          },
+        }}
+      />
+      <Stack.Screen 
+        name="Dinner" 
+        component={DinnerScreen} 
         options={{
           cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
           presentation: 'card',

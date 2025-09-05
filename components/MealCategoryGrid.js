@@ -13,6 +13,7 @@ const MealCategoryGrid = ({ onCategoryPress }) => {
       color: '#FF9500',
       backgroundColor: '#FFF3E6',
       borderColor: '#FFEAD6',
+      screenName: 'Breakfast', // Add screen name mapping
     },
     {
       id: 2,
@@ -21,6 +22,7 @@ const MealCategoryGrid = ({ onCategoryPress }) => {
       color: '#34C759',
       backgroundColor: '#F0FFF4',
       borderColor: '#E8F5E8',
+      screenName: 'Lunch', // Add screen name mapping
     },
     {
       id: 3,
@@ -29,6 +31,7 @@ const MealCategoryGrid = ({ onCategoryPress }) => {
       color: '#FF6B6B',
       backgroundColor: '#FFF5F5',
       borderColor: '#FFE8E8',
+      screenName: 'Snacks', // Add screen name mapping
     },
     {
       id: 4,
@@ -37,15 +40,18 @@ const MealCategoryGrid = ({ onCategoryPress }) => {
       color: '#5856D6',
       backgroundColor: '#F5F4FF',
       borderColor: '#EBEAFF',
+      screenName: 'Dinner', // Add screen name mapping
     },
   ];
 
   const navigation = useNavigation();
 
   const handleCategoryPress = (category) => {
-    navigation.navigate("Breakfast");
+    // Navigate to the specific screen based on category
+    navigation.navigate(category.screenName);
+    
+    // Call the optional callback
     if (onCategoryPress) {
-      
       onCategoryPress(category);
     }
   };

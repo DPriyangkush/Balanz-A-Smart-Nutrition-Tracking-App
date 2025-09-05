@@ -97,8 +97,31 @@ export default function LocationStyleHeader({
     };
   });
 
-  // Text color animation - like old StretchyHeader
+  // Helper function to convert hex to RGB (runs on JS thread)
+  const hexToRgb = (hex) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 51, g: 51, b: 51 }; // Default fallback
+  };
+
+  // Pre-calculate RGB values on JS thread
+  const titleRgb = React.useMemo(() => hexToRgb(titleColor), [titleColor]);
+  const subtitleRgb = React.useMemo(() => hexToRgb(subtitleColor), [subtitleColor]);
+
+  // Text color animation - updated to use passed colors
   const textColorStyle = useAnimatedStyle(() => {
+    const shouldAnimate = titleColor === "#333333"; // Default color
+    
+    if (!shouldAnimate) {
+      return {
+        color: titleColor, // Use the passed color directly
+      };
+    }
+    
+    // Original animation for default colors using pre-calculated RGB
     const colorProgress = interpolate(
       scrollY.value,
       [0, headerHeight * 0.25],
@@ -106,9 +129,36 @@ export default function LocationStyleHeader({
       Extrapolate.CLAMP
     );
     
-    const red = interpolate(colorProgress, [0, 1], [51, 255], Extrapolate.CLAMP);
-    const green = interpolate(colorProgress, [0, 1], [51, 255], Extrapolate.CLAMP);
-    const blue = interpolate(colorProgress, [0, 1], [51, 255], Extrapolate.CLAMP);
+    const red = interpolate(colorProgress, [0, 1], [titleRgb.r, 255], Extrapolate.CLAMP);
+    const green = interpolate(colorProgress, [0, 1], [titleRgb.g, 255], Extrapolate.CLAMP);
+    const blue = interpolate(colorProgress, [0, 1], [titleRgb.b, 255], Extrapolate.CLAMP);
+    
+    return {
+      color: `rgb(${Math.round(red)}, ${Math.round(green)}, ${Math.round(blue)})`,
+    };
+  });
+
+  // Subtitle color animation - updated to use passed colors
+  const subtitleColorStyle = useAnimatedStyle(() => {
+    const shouldAnimate = subtitleColor === "#666666"; // Default color
+    
+    if (!shouldAnimate) {
+      return {
+        color: subtitleColor, // Use the passed color directly
+      };
+    }
+    
+    // Original animation for default colors using pre-calculated RGB
+    const colorProgress = interpolate(
+      scrollY.value,
+      [0, headerHeight * 0.25],
+      [0, 1],
+      Extrapolate.CLAMP
+    );
+    
+    const red = interpolate(colorProgress, [0, 1], [subtitleRgb.r, 255], Extrapolate.CLAMP);
+    const green = interpolate(colorProgress, [0, 1], [subtitleRgb.g, 255], Extrapolate.CLAMP);
+    const blue = interpolate(colorProgress, [0, 1], [subtitleRgb.b, 255], Extrapolate.CLAMP);
     
     return {
       color: `rgb(${Math.round(red)}, ${Math.round(green)}, ${Math.round(blue)})`,
@@ -249,7 +299,7 @@ export default function LocationStyleHeader({
 
           {/* Center - Location Info */}
           <View style={styles.locationContainer}>
-            <Animated.Text style={[styles.locationLabel, textColorStyle]}>Location</Animated.Text>
+            <Animated.Text style={[styles.locationLabel, subtitleColorStyle]}>Location</Animated.Text>
             <View style={styles.titleRow}>
               <Ionicons name="location" size={16} color="#FF6B6B" style={styles.locationIcon} />
               <Animated.Text style={[styles.locationTitle, textColorStyle]} numberOfLines={1}>
@@ -272,7 +322,7 @@ export default function LocationStyleHeader({
               <Ionicons 
                 name="notifications-outline" 
                 size={notificationSize} 
-                color="#333"
+                color={notificationColor}
               />
               {hasNotificationBadge && <View style={styles.notificationBadge} />}
             </View>
