@@ -1,4 +1,4 @@
-// Enhanced PromoDataManager.js - Fixed weekend detection and filtering
+// Enhanced PromoDataManager.js - Expanded weekend data and improved filtering
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Configuration constants (unchanged)
@@ -43,7 +43,7 @@ export const PROMO_CONFIG = {
   }
 };
 
-// Enhanced promo data structure (unchanged)
+// Significantly expanded promo data structure with more weekend options
 export const PROMO_DATA = {
   breakfast: {
     weekday: [
@@ -104,9 +104,9 @@ export const PROMO_DATA = {
     ],
     weekend: [
       {
-        id: 'breakfast_weekend_brunch',
-        title: "Weekend Brunch",
-        subtitle: "Leisurely brunch specials for your weekend!",
+        id: 'breakfast_weekend_brunch_deluxe',
+        title: "Weekend Brunch Deluxe",
+        subtitle: "Leisurely brunch specials for your weekend relaxation!",
         buttonText: "Explore Brunch",
         imageSource: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=300&h=200&fit=crop',
         discount: '40%',
@@ -116,29 +116,80 @@ export const PROMO_DATA = {
         targetAudience: ['families', 'couples', 'food-lovers'],
         validUntil: null,
         minOrderValue: 499,
-        badge: 'WEEKEND SPECIAL',
+        
         specialOffer: 'Complimentary dessert with brunch combos',
-        ratings: 4.9,
-        orderCount: '800+ orders today',
+        
       },
       {
-        id: 'breakfast_masti_weekend_brunch',
-        title: "Weekend Masti",
-        subtitle: "Leisurely brunch specials for your weekend!",
-        buttonText: "Explore Brunch",
-        imageSource: 'https://images.unsplash.com/photo-1554520735-0a6b8b6ce8b7?q=80&w=764&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-        discount: '40%',
-        category: 'brunch',
+        id: 'breakfast_weekend_family_feast',
+        title: "Family Weekend Feast",
+        subtitle: "Perfect sharing portions for the whole family!",
+        buttonText: "Family Time",
+        imageSource: 'https://images.unsplash.com/photo-1554520735-0a6b8b6ce8b7?w=300&h=200&fit=crop',
+        discount: '45%',
+        category: 'family',
         priority: 2,
-        tags: ['premium', 'leisure', 'indulgent', 'family'],
-        targetAudience: ['families', 'couples', 'food-lovers'],
+        tags: ['family', 'sharing', 'variety', 'weekend'],
+        targetAudience: ['families', 'large-groups'],
         validUntil: null,
-        minOrderValue: 499,
-        badge: 'WEEKEND SPECIAL',
-        specialOffer: 'Complimentary dessert with brunch combos',
-        ratings: 4.9,
-        orderCount: '800+ orders today',
+        minOrderValue: 699,
+        
+        specialOffer: 'Free family game with orders above ₹800',
+        
       },
+      {
+        id: 'breakfast_weekend_lazy_morning',
+        title: "Lazy Morning Treats",
+        subtitle: "Indulgent breakfast for those slow weekend mornings!",
+        buttonText: "Indulge Now",
+        imageSource: 'https://images.unsplash.com/photo-1495147466023-ac5c588e2e94?w=300&h=200&fit=crop',
+        discount: '35%',
+        category: 'indulgent',
+        priority: 3,
+        tags: ['indulgent', 'comfort', 'sweet', 'weekend'],
+        targetAudience: ['comfort-seekers', 'sweet-tooth'],
+        validUntil: null,
+        minOrderValue: 399,
+        
+        specialOffer: 'Free hot chocolate with pancake orders',
+        
+      },
+      {
+        id: 'breakfast_weekend_healthy_brunch',
+        title: "Healthy Weekend Brunch",
+        subtitle: "Nutritious yet delicious weekend breakfast options!",
+        buttonText: "Eat Clean",
+        imageSource: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=300&h=200&fit=crop',
+        discount: '30%',
+        category: 'healthy-weekend',
+        priority: 4,
+        tags: ['healthy', 'organic', 'fresh', 'weekend'],
+        targetAudience: ['health-conscious', 'fitness'],
+        validUntil: null,
+        minOrderValue: 349,
+        
+        specialOffer: 'Free fresh juice with healthy combos',
+        ratings: 4.6,
+        orderCount: '750+ orders today',
+      },
+      {
+        id: 'breakfast_weekend_continental',
+        title: "Continental Weekend",
+        subtitle: "European-style breakfast for sophisticated weekends!",
+        buttonText: "Go Continental",
+        imageSource: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=200&fit=crop',
+        discount: '38%',
+        category: 'continental',
+        priority: 5,
+        tags: ['continental', 'sophisticated', 'premium', 'weekend'],
+        targetAudience: ['sophisticated', 'couples'],
+        validUntil: null,
+        minOrderValue: 549,
+        
+        specialOffer: 'Free croissant with continental breakfast',
+        ratings: 4.8,
+        orderCount: '500+ orders today',
+      }
     ],
     seasonal: {
       summer: [
@@ -221,13 +272,31 @@ export const PROMO_DATA = {
         specialOffer: 'Free lemon water with salads',
         ratings: 4.5,
         orderCount: '1.8k+ orders today',
+      },
+      {
+        id: 'lunch_express_meal',
+        title: "Express Lunch",
+        subtitle: "Quick and delicious meals for busy schedules!",
+        buttonText: "Order Fast",
+        imageSource: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=200&fit=crop',
+        discount: '20%',
+        category: 'express',
+        priority: 3,
+        tags: ['quick', 'convenient', 'office', 'fast'],
+        targetAudience: ['busy-professionals', 'students'],
+        validUntil: null,
+        minOrderValue: 249,
+        badge: 'EXPRESS',
+        specialOffer: 'Delivery in 15 minutes',
+        ratings: 4.4,
+        orderCount: '3.1k+ orders today',
       }
     ],
     weekend: [
       {
-        id: 'lunch_family_feast',
-        title: "Family Feast",
-        subtitle: "Perfect portions for the whole family!",
+        id: 'lunch_weekend_family_feast',
+        title: "Weekend Family Feast",
+        subtitle: "Perfect portions for the whole family to enjoy together!",
         buttonText: "Family Time",
         imageSource: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=300&h=200&fit=crop',
         discount: '45%',
@@ -237,10 +306,60 @@ export const PROMO_DATA = {
         targetAudience: ['families'],
         validUntil: null,
         minOrderValue: 799,
-        badge: 'FAMILY PACK',
+        
         specialOffer: 'Free dessert platter with family combos',
+       
+      },
+      {
+        id: 'lunch_weekend_gourmet_special',
+        title: "Weekend Gourmet",
+        subtitle: "Premium lunch experiences for special weekends!",
+        buttonText: "Go Gourmet",
+        imageSource: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=300&h=200&fit=crop',
+        discount: '40%',
+        category: 'gourmet',
+        priority: 2,
+        tags: ['premium', 'gourmet', 'special', 'weekend'],
+        targetAudience: ['food-lovers', 'couples'],
+        validUntil: null,
+        minOrderValue: 649,
+        
+        specialOffer: 'Free appetizer with gourmet meals',
+        
+      },
+      {
+        id: 'lunch_weekend_comfort_bowl',
+        title: "Weekend Comfort Bowl",
+        subtitle: "Hearty comfort foods for relaxing weekend afternoons!",
+        buttonText: "Get Comfort",
+        imageSource: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=300&h=200&fit=crop',
+        discount: '35%',
+        category: 'comfort',
+        priority: 3,
+        tags: ['comfort', 'hearty', 'satisfying', 'weekend'],
+        targetAudience: ['comfort-seekers', 'families'],
+        validUntil: null,
+        minOrderValue: 449,
+      
+        specialOffer: 'Free soup with comfort meals',
+        
+      },
+      {
+        id: 'lunch_weekend_healthy_deluxe',
+        title: "Weekend Healthy Deluxe",
+        subtitle: "Premium healthy options for wellness-focused weekends!",
+        buttonText: "Eat Well",
+        imageSource: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=300&h=200&fit=crop',
+        discount: '32%',
+        category: 'healthy-premium',
+        priority: 4,
+        tags: ['healthy', 'premium', 'organic', 'weekend'],
+        targetAudience: ['health-conscious', 'fitness'],
+        validUntil: null,
+        minOrderValue: 549,
+        specialOffer: 'Free superfood drink with orders',
         ratings: 4.8,
-        orderCount: '600+ orders today',
+        orderCount: '550+ orders today',
       }
     ]
   },
@@ -264,26 +383,88 @@ export const PROMO_DATA = {
         specialOffer: 'Buy 2 get 1 free on healthy snacks',
         ratings: 4.4,
         orderCount: '3.2k+ orders today',
+      },
+      {
+        id: 'snacks_energy_boost',
+        title: "Energy Snacks",
+        subtitle: "Power-packed snacks for instant energy boost!",
+        buttonText: "Get Energy",
+        imageSource: 'https://images.unsplash.com/photo-1599599810769-bcde5a160d32?w=300&h=200&fit=crop',
+        discount: '22%',
+        category: 'energy',
+        priority: 2,
+        tags: ['energy', 'protein', 'nuts', 'boost'],
+        targetAudience: ['fitness', 'students', 'professionals'],
+        validUntil: null,
+        minOrderValue: 199,
+        badge: 'ENERGY',
+        specialOffer: 'Free protein bar with energy combos',
+        ratings: 4.5,
+        orderCount: '2.8k+ orders today',
       }
     ],
     weekend: [
       {
-        id: 'snacks_weekend_treats',
-        title: "Weekend Treats",
-        subtitle: "Special treats for your relaxing weekend!",
+        id: 'snacks_weekend_treats_premium',
+        title: "Premium Weekend Treats",
+        subtitle: "Indulgent treats for your special weekend moments!",
         buttonText: "Treat Yourself",
         imageSource: 'https://images.unsplash.com/photo-1486427944299-d1955d23e34d?w=300&h=200&fit=crop',
-        discount: '35%',
-        category: 'treats',
+        discount: '38%',
+        category: 'premium-treats',
         priority: 1,
-        tags: ['indulgent', 'special', 'weekend', 'desserts'],
+        tags: ['indulgent', 'premium', 'weekend', 'desserts'],
         targetAudience: ['all'],
         validUntil: null,
+        minOrderValue: 299,
+        
+        specialOffer: 'Free premium ice cream with dessert orders',
+        
+      },
+      {
+        id: 'snacks_weekend_party_pack',
+        title: "Weekend Party Pack",
+        subtitle: "Perfect sharing snacks for weekend gatherings!",
+        buttonText: "Party Time",
+        imageSource: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=300&h=200&fit=crop',
+        discount: '42%',
+        category: 'party',
+        priority: 2,
+        tags: ['sharing', 'party', 'variety', 'weekend'],
+        targetAudience: ['families', 'friends', 'party-goers'],
+        validUntil: null,
+        minOrderValue: 499,
+        specialOffer: 'Free party games with large orders',
+      },
+      {
+        id: 'snacks_weekend_artisan',
+        title: "Artisan Weekend Bites",
+        subtitle: "Handcrafted gourmet snacks for discerning tastes!",
+        buttonText: "Go Artisan",
+        imageSource: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop',
+        discount: '35%',
+        category: 'artisan',
+        priority: 3,
+        tags: ['artisan', 'handcrafted', 'gourmet', 'weekend'],
+        targetAudience: ['food-lovers', 'sophisticated'],
+        validUntil: null,
+        minOrderValue: 399,
+        specialOffer: 'Free artisan cheese with orders',
+      },
+      {
+        id: 'snacks_weekend_comfort_bites',
+        title: "Weekend Comfort Bites",
+        subtitle: "Nostalgic comfort snacks for cozy weekend vibes!",
+        buttonText: "Feel Comfort",
+        imageSource: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&h=200&fit=crop',
+        discount: '30%',
+        category: 'comfort',
+        priority: 4,
+        tags: ['comfort', 'nostalgic', 'cozy', 'weekend'],
+        targetAudience: ['comfort-seekers', 'families'],
+        validUntil: null,
         minOrderValue: 249,
-        badge: 'WEEKEND ONLY',
-        specialOffer: 'Free ice cream with dessert orders',
-        ratings: 4.6,
-        orderCount: '1.5k+ orders today',
+        specialOffer: 'Free hot beverage with comfort snacks',
       }
     ]
   },
@@ -307,13 +488,31 @@ export const PROMO_DATA = {
         specialOffer: 'Free soup with dinner combos',
         ratings: 4.7,
         orderCount: '2.8k+ orders today',
+      },
+      {
+        id: 'dinner_healthy_choice',
+        title: "Healthy Dinner",
+        subtitle: "Nutritious yet delicious dinner options!",
+        buttonText: "Eat Healthy",
+        imageSource: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=300&h=200&fit=crop',
+        discount: '28%',
+        category: 'healthy',
+        priority: 2,
+        tags: ['healthy', 'nutritious', 'balanced', 'fresh'],
+        targetAudience: ['health-conscious', 'fitness'],
+        validUntil: null,
+        minOrderValue: 349,
+        badge: 'HEALTHY',
+        specialOffer: 'Free herbal tea with healthy meals',
+        ratings: 4.6,
+        orderCount: '2.2k+ orders today',
       }
     ],
     weekend: [
       {
-        id: 'dinner_weekend_special',
-        title: "Weekend Special",
-        subtitle: "Premium dinner experiences for the weekend!",
+        id: 'dinner_weekend_special_deluxe',
+        title: "Weekend Special Deluxe",
+        subtitle: "Premium dinner experiences for unforgettable weekends!",
         buttonText: "Book Special",
         imageSource: 'https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=300&h=200&fit=crop',
         discount: '50%',
@@ -323,21 +522,81 @@ export const PROMO_DATA = {
         targetAudience: ['couples', 'special-occasions', 'food-lovers'],
         validUntil: null,
         minOrderValue: 899,
-        badge: 'PREMIUM',
+        
         specialOffer: 'Complimentary wine with premium dinners',
-        ratings: 4.9,
-        orderCount: '400+ orders today',
+        
+      },
+      {
+        id: 'dinner_weekend_family_celebration',
+        title: "Family Weekend Celebration",
+        subtitle: "Grand dinner spreads perfect for family celebrations!",
+        buttonText: "Celebrate",
+        imageSource: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=300&h=200&fit=crop',
+        discount: '45%',
+        category: 'family-celebration',
+        priority: 2,
+        tags: ['family', 'celebration', 'grand', 'sharing'],
+        targetAudience: ['families', 'large-groups'],
+        validUntil: null,
+        minOrderValue: 1299,
+        specialOffer: 'Free celebration cake with large orders',
+      },
+      {
+        id: 'dinner_weekend_romantic',
+        title: "Romantic Weekend Dinner",
+        subtitle: "Intimate dining experiences for couples!",
+        buttonText: "Romance",
+        imageSource: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=300&h=200&fit=crop',
+        discount: '40%',
+        category: 'romantic',
+        priority: 3,
+        tags: ['romantic', 'intimate', 'couples', 'candlelight'],
+        targetAudience: ['couples', 'romantic'],
+        validUntil: null,
+        minOrderValue: 799,
+        specialOffer: 'Free roses and candles with romantic dinners',
+      },
+      {
+        id: 'dinner_weekend_comfort_feast',
+        title: "Weekend Comfort Feast",
+        subtitle: "Ultimate comfort foods for relaxing weekend evenings!",
+        buttonText: "Feast Now",
+        imageSource: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&h=200&fit=crop',
+        discount: '38%',
+        category: 'comfort-feast',
+        priority: 4,
+        tags: ['comfort', 'feast', 'hearty', 'satisfying'],
+        targetAudience: ['comfort-seekers', 'families'],
+        validUntil: null,
+        minOrderValue: 699,
+        specialOffer: 'Free comfort dessert with feast orders',
+      },
+      {
+        id: 'dinner_weekend_international',
+        title: "International Weekend",
+        subtitle: "Global cuisines for adventurous weekend dining!",
+        buttonText: "Go Global",
+        imageSource: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=300&h=200&fit=crop',
+        discount: '35%',
+        category: 'international',
+        priority: 5,
+        tags: ['international', 'global', 'exotic', 'adventure'],
+        targetAudience: ['adventurous', 'food-lovers'],
+        validUntil: null,
+        minOrderValue: 599,
+        specialOffer: 'Free international appetizer sampler',
       }
     ]
   }
 };
 
-// Enhanced PromoDataManager class with debug logging
+// Enhanced PromoDataManager class with improved filtering and debugging
 export class PromoDataManager {
   constructor() {
     this.cache = new Map();
     this.lastFetchTime = new Map();
     this.listeners = new Set();
+    this.forceWeekendOverride = false;
   }
 
   // Event listener management
@@ -366,6 +625,10 @@ export class PromoDataManager {
   }
 
   isWeekend() {
+    if (this.forceWeekendOverride) {
+      console.log(`[PromoManager] Force weekend override: returning true`);
+      return true;
+    }
     const day = new Date().getDay();
     const isWeekendResult = day === 0 || day === 6; // 0 = Sunday, 6 = Saturday
     console.log(`[PromoManager] Weekend check: day=${day}, isWeekend=${isWeekendResult}`);
@@ -415,7 +678,7 @@ export class PromoDataManager {
     return 'night';
   }
 
-  // User profile filtering with debug logs
+  // Enhanced user profile filtering with more permissive approach for fallback scenarios
   filterByUserProfile(promos, userProfile) {
     if (!userProfile) {
       console.log(`[PromoManager] No user profile provided, returning all ${promos.length} promos`);
@@ -423,18 +686,19 @@ export class PromoDataManager {
     }
 
     const filtered = promos.filter(promo => {
-      // Target audience filtering
+      // Target audience filtering - be more permissive
       if (promo.targetAudience && userProfile.audience) {
         const hasMatch = promo.targetAudience.some(audience => 
           userProfile.audience.includes(audience) || audience === 'all'
         );
-        if (!hasMatch) {
-          console.log(`[PromoManager] Filtering out ${promo.id} - target audience mismatch`);
-          return false;
+        // Don't filter out if no specific target audience match for fallback scenarios
+        if (!hasMatch && promo.targetAudience.length > 0 && !promo.targetAudience.includes('all')) {
+          console.log(`[PromoManager] Soft filtering ${promo.id} - target audience mismatch (will keep for fallback)`);
+          // Don't return false here, keep the promo for fallback scenarios
         }
       }
 
-      // Dietary restrictions
+      // Dietary restrictions - strict filtering
       if (userProfile.dietaryRestrictions && promo.tags) {
         const restrictions = userProfile.dietaryRestrictions;
         if (restrictions.includes('vegetarian') && promo.tags.includes('non-vegetarian')) {
@@ -452,16 +716,18 @@ export class PromoDataManager {
         }
       }
 
-      // Budget filtering
+      // Budget filtering - be more permissive for weekends
       if (userProfile.budgetRange) {
         const [minBudget, maxBudget] = userProfile.budgetRange;
-        if (promo.minOrderValue > maxBudget) {
-          console.log(`[PromoManager] Filtering out ${promo.id} - budget too high (${promo.minOrderValue} > ${maxBudget})`);
+        // Allow 20% budget flexibility for weekend specials
+        const flexibleBudget = this.isWeekend() ? maxBudget * 1.2 : maxBudget;
+        if (promo.minOrderValue > flexibleBudget) {
+          console.log(`[PromoManager] Filtering out ${promo.id} - budget too high (${promo.minOrderValue} > ${flexibleBudget})`);
           return false;
         }
       }
 
-      // Allergy filtering
+      // Allergy filtering - strict filtering
       if (userProfile.allergies && promo.tags) {
         const hasAllergen = userProfile.allergies.some(allergy => 
           promo.tags.includes(allergy.toLowerCase())
@@ -511,17 +777,17 @@ export class PromoDataManager {
     };
   }
 
-  // Enhanced main promo retrieval method with comprehensive debug logging
+  // Enhanced main promo retrieval method with improved weekend data handling
   async getPromos(mealType, userProfile = null, options = {}) {
     const { forceRefresh = false, limit = PROMO_CONFIG.MAX_PROMOS_PER_MEAL } = options;
     
     console.log(`[PromoManager] Getting promos for ${mealType}, limit=${limit}, forceRefresh=${forceRefresh}`);
     
     try {
-      // Check cache first
+      // Check cache first (unless force refresh)
       if (!forceRefresh) {
         const cached = await this.getCachedPromos(mealType);
-        if (cached) {
+        if (cached && cached.length >= 2) {
           console.log(`[PromoManager] Returning ${cached.length} cached promos`);
           this.notifyListeners('promos_loaded', { mealType, source: 'cache' });
           return cached.slice(0, limit);
@@ -534,7 +800,7 @@ export class PromoDataManager {
         throw new Error(`No data found for meal type: ${mealType}`);
       }
 
-      console.log(`[PromoManager] Meal data structure:`, {
+      console.log(`[PromoManager] Meal data structure for ${mealType}:`, {
         hasWeekday: !!mealData.weekday,
         weekdayCount: mealData.weekday?.length || 0,
         hasWeekend: !!mealData.weekend,
@@ -546,12 +812,25 @@ export class PromoDataManager {
       let availablePromos = [];
 
       // Collect promos based on context with detailed logging
-      if (context.isWeekend && mealData.weekend) {
-        console.log(`[PromoManager] Adding ${mealData.weekend.length} weekend promos`);
+      if (context.isWeekend && mealData.weekend && mealData.weekend.length > 0) {
+        console.log(`[PromoManager] Adding ${mealData.weekend.length} weekend promos for ${mealType}`);
         availablePromos.push(...mealData.weekend);
-      } else if (!context.isWeekend && mealData.weekday) {
-        console.log(`[PromoManager] Adding ${mealData.weekday.length} weekday promos`);
-        availablePromos.push(...mealData.weekday);
+      } 
+      
+      // Always add weekday promos as fallback, but prioritize weekend on weekends
+      if (mealData.weekday && mealData.weekday.length > 0) {
+        if (context.isWeekend) {
+          console.log(`[PromoManager] Adding ${mealData.weekday.length} weekday promos as fallback for weekend`);
+        } else {
+          console.log(`[PromoManager] Adding ${mealData.weekday.length} weekday promos for ${mealType}`);
+        }
+        
+        // Add weekday promos, but with lower priority on weekends
+        const weekdayWithPriority = mealData.weekday.map(promo => ({
+          ...promo,
+          priority: context.isWeekend ? (promo.priority || 0) + 100 : (promo.priority || 0)
+        }));
+        availablePromos.push(...weekdayWithPriority);
       }
 
       // Add seasonal promos
@@ -578,7 +857,7 @@ export class PromoDataManager {
         this.applyThemeToPromo(promo, mealType)
       );
 
-      // Sort by priority
+      // Sort by priority (lower number = higher priority)
       availablePromos.sort((a, b) => (a.priority || 999) - (b.priority || 999));
 
       // Limit results
@@ -587,8 +866,10 @@ export class PromoDataManager {
       console.log(`[PromoManager] Final result: ${result.length} promos`);
       console.log(`[PromoManager] Final promo IDs: ${result.map(p => p.id).join(', ')}`);
 
-      // Cache results
-      await this.cachePromos(mealType, result);
+      // Cache results if we have enough
+      if (result.length >= 2) {
+        await this.cachePromos(mealType, result);
+      }
 
       this.notifyListeners('promos_loaded', { mealType, source: 'fresh', count: result.length });
       return result;
@@ -649,15 +930,8 @@ export class PromoDataManager {
 
   // Test method to force weekend mode (for debugging)
   forceWeekendMode(enabled = true) {
-    const originalIsWeekend = this.isWeekend;
-    if (enabled) {
-      this.isWeekend = () => {
-        console.log(`[PromoManager] Forced weekend mode: returning true`);
-        return true;
-      };
-    } else {
-      this.isWeekend = originalIsWeekend;
-    }
+    this.forceWeekendOverride = enabled;
+    console.log(`[PromoManager] Force weekend mode: ${enabled ? 'enabled' : 'disabled'}`);
   }
 
   // Analytics and tracking
@@ -716,7 +990,6 @@ export class PromoDataManager {
   }
 }
 
-// User profile utilities (unchanged
 // User profile utilities
 export const createUserProfile = (preferences = {}) => {
   return {

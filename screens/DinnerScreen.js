@@ -1,4 +1,4 @@
-// BreakfastScreen.js - Production-optimized with buttery smooth animations
+// DinnerScreen.js - Updated with PromoCarousel integration
 import React, { 
     memo, 
     useMemo, 
@@ -26,15 +26,18 @@ import {
     UIManager,
 } from "react-native";
 import { LinearGradient } from 'expo-linear-gradient';
-import { BreakfastWrapper, DinnerWrapper, SnacksWrapper } from "../components/ScreenWrappers";
+import { DinnerWrapper } from "../components/ScreenWrappers";
 import HeaderSection from "../components/HeaderSection";
 import PromoCard from "../components/PromoCard";
 import NutritionCategories from "../components/NutritionCategories";
-import SunriseSunLensUltra from "../animatedScenes/SunriseScene";
 import MealSearchInput from "../components/MealSearchInput";
-import FoodCardsGrid from "components/BreakfastRecommendedCards";
+import FoodCardsGrid from "../components/BreakfastRecommendedCards";
 import { MealService } from '../src/services/MealService';
-import NightMoonScene from "animatedScenes/NightScene";
+import NightMoonScene from "../animatedScenes/NightScene";
+
+// Import the new promo components
+import PromoCarousel from '../components/PromoCarousel';
+import { promoManager, SAMPLE_USER_PROFILES, createUserProfile } from '../src/services/PromoDataManager';
 
 // Enable layout animations on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -79,9 +82,26 @@ const MemoizedPromoCard = memo(PromoCard);
 const MemoizedNutritionCategories = memo(NutritionCategories);
 const MemoizedFoodCardsGrid = memo(FoodCardsGrid);
 const MemoizedMealSearchInput = memo(MealSearchInput);
+const MemoizedPromoCarousel = memo(PromoCarousel);
 
 // Main component
-const DinnerScreen = memo(({ navigation }) => {
+const DinnerScreen = memo(({ navigation, route }) => {
+    // Get user profile from route params or create default
+    const userProfile = useMemo(() => {
+        if (route?.params?.userProfile) {
+            return route.params.userProfile;
+        }
+        
+        // Create a default user profile for dinner lovers
+        return createUserProfile({
+            audience: ['families', 'comfort-seekers', 'home-cooks'],
+            dietaryRestrictions: [],
+            budgetRange: [400, 1200],
+            favoriteCategories: ['comfort', 'hearty', 'family-style'],
+            mealPreferences: { preferComfortFood: true, familyMeals: true },
+        });
+    }, [route?.params?.userProfile]);
+
     // Search state with better organization
     const [searchState, setSearchState] = useState({
         query: '',
@@ -89,6 +109,12 @@ const DinnerScreen = memo(({ navigation }) => {
         results: [],
         isSearching: false,
         error: null,
+    });
+
+    // Promo state
+    const [promoState, setPromoState] = useState({
+        showPromoCarousel: true,
+        promoError: null,
     });
 
     // Animation refs organized and optimized
@@ -123,8 +149,61 @@ const DinnerScreen = memo(({ navigation }) => {
             horizontalPadding: safeHorizontalPadding,
             sectionSpacing: Math.min(Math.max(screenWidth * 0.03, 16), 20),
             gradientWidth: Math.min(Math.max(screenWidth * 0.08, 30), 60),
-            searchResultsTop: isTablet ? 450 : 500,
+            searchResultsTop: isTablet ? 450 : 470,
         };
+    }, []);
+
+    // Promo event handlers
+    const handlePromoPress = useCallback((promo, index) => {
+        console.log('Dinner promo pressed:', promo.title, 'at index:', index);
+        
+        // Show detailed promo information
+        Alert.alert(
+            promo.title,
+            `${promo.subtitle}\n\n${promo.specialOffer || 'Special dinner offer available!'}`,
+            [
+                { text: 'Maybe Later', style: 'cancel' },
+                { 
+                    text: promo.buttonText, 
+                    onPress: () => {
+                        // Navigate to a specific dinner category or items
+                        // You can customize this based on the promo category
+                        if (promo.category === 'steak') {
+                            // Navigate to steak dinner options
+                            console.log('Navigating to steak dinner options');
+                        } else if (promo.category === 'comfort') {
+                            // Navigate to comfort dinner options
+                            console.log('Navigating to comfort dinner options');
+                        } else if (promo.category === 'seafood') {
+                            // Navigate to seafood dinner options
+                            console.log('Navigating to seafood dinner options');
+                        } else {
+                            // Default navigation
+                            console.log('Default dinner promo action');
+                        }
+                    }
+                }
+            ]
+        );
+    }, []);
+
+    // Handle promo carousel errors
+    const handlePromoError = useCallback((error) => {
+        console.warn('Dinner promo carousel error:', error);
+        setPromoState(prev => ({
+            ...prev,
+            promoError: error,
+            showPromoCarousel: false,
+        }));
+    }, []);
+
+    // Toggle promo carousel visibility
+    const togglePromoCarousel = useCallback(() => {
+        setPromoState(prev => ({
+            ...prev,
+            showPromoCarousel: !prev.showPromoCarousel,
+            promoError: null,
+        }));
     }, []);
 
     // Optimized result card animation initialization
@@ -369,6 +448,7 @@ const DinnerScreen = memo(({ navigation }) => {
         foodCardsSeeAll: () => Alert.alert("Popular Recipes", "View all popular recipes"),
         itemPress: (item) => Alert.alert("Food Item", `Selected: ${item.name}`),
         recommendedSeeAll: () => Alert.alert("Recommended", "View all recommended items"),
+        // Legacy promo press handler for the old promo card
         promoPress: () => Alert.alert("Promo", "New recipe promotion activated!"),
     }), []);
 
@@ -377,29 +457,28 @@ const DinnerScreen = memo(({ navigation }) => {
             mealData: {
                 id: item.id,
                 name: item.name,
-                category: item.category || 'Breakfast',
-                prepTime: '5 min',
+                category: item.category || 'Dinner',
+                prepTime: '30 min',
                 kcal: item.kcal,
                 protein: item.protein,
                 carbs: item.carbs,
                 fats: item.fats,
-                servings: 2,
+                servings: 4,
                 image: item.image,
                 ingredients: [
-                    { quantity: '1 cup', item: 'Rolled oats' },
-                    { quantity: '2 cups', item: 'Water or milk' },
-                    { quantity: '1 tbsp', item: 'Honey or maple syrup' },
-                    { quantity: '1/4 cup', item: 'Fresh berries' },
-                    { quantity: '1 tbsp', item: 'Chia seeds (optional)' },
-                    { quantity: '1/4 tsp', item: 'Vanilla extract' },
+                    { quantity: '300g', item: 'Premium steak' },
+                    { quantity: '2 cups', item: 'Roasted vegetables' },
+                    { quantity: '1 cup', item: 'Mashed potatoes' },
+                    { quantity: '3 tbsp', item: 'Herb butter' },
+                    { quantity: '1 tbsp', item: 'Seasoning blend' },
                 ],
                 instructions: [
-                    'Bring water or milk to a boil in a medium saucepan.',
-                    'Add oats and reduce heat to medium-low.',
-                    'Cook for 5-7 minutes, stirring occasionally until creamy.',
-                    'Remove from heat and stir in sweetener and vanilla.',
-                    'Top with fresh berries, chia seeds, and serve hot.',
-                    'Add nuts or granola for extra crunch if desired.'
+                    'Season steak generously with seasoning blend.',
+                    'Heat pan to medium-high heat.',
+                    'Cook steak 4-5 minutes per side for medium-rare.',
+                    'Let steak rest for 5 minutes before serving.',
+                    'Serve with roasted vegetables and mashed potatoes.',
+                    'Top with herb butter and enjoy your dinner!'
                 ]
             }
         });
@@ -410,13 +489,13 @@ const DinnerScreen = memo(({ navigation }) => {
             mealData: {
                 id: meal.id,
                 name: meal.mealName,
-                category: 'Breakfast',
+                category: 'Dinner',
                 prepTime: meal.prepTime,
                 kcal: meal.calories,
-                protein: '25g',
-                carbs: '30g', 
-                fats: '15g',
-                servings: 2,
+                protein: '35g',
+                carbs: '25g', 
+                fats: '20g',
+                servings: 4,
                 image: meal.imageUri,
                 ingredients: [
                     { quantity: '1 cup', item: 'Main ingredient' },
@@ -426,7 +505,7 @@ const DinnerScreen = memo(({ navigation }) => {
                 instructions: [
                     'Prepare all ingredients as specified.',
                     'Follow cooking instructions carefully.',
-                    'Serve hot and enjoy your healthy meal.',
+                    'Serve hot and enjoy your healthy dinner.',
                 ]
             }
         });
@@ -490,12 +569,12 @@ const DinnerScreen = memo(({ navigation }) => {
         <View style={styles.emptyState}>
             <Text style={styles.emptyStateEmoji}>🔍</Text>
             <Text style={styles.emptyStateTitle}>
-                {searchState.query ? 'No breakfast items found' : 'Start searching for breakfast'}
+                {searchState.query ? 'No dinner items found' : 'Start searching for dinner'}
             </Text>
             <Text style={styles.emptyStateSubtitle}>
                 {searchState.query
-                    ? 'Try different keywords or browse our breakfast categories'
-                    : 'Type in the search box above to find delicious breakfast meals'
+                    ? 'Try different keywords or browse our dinner categories'
+                    : 'Type in the search box above to find delicious dinner meals'
                 }
             </Text>
         </View>
@@ -504,7 +583,7 @@ const DinnerScreen = memo(({ navigation }) => {
     const renderLoadingState = useMemo(() => (
         <View style={styles.loadingSpinnerContainer}>
             <ActivityIndicator size="large" color="#FF6B35" />
-            <Text style={styles.loadingText}>Searching for breakfast...</Text>
+            <Text style={styles.loadingText}>Searching for dinner...</Text>
         </View>
     ), []);
 
@@ -603,28 +682,65 @@ const DinnerScreen = memo(({ navigation }) => {
             </View>
             
             <View style={responsiveStyles.contentSection}>
-                <MemoizedHeaderSection 
-                    userName="Priyangkush"
-        mealType="dinner"
-        onSearchPress={() => navigation.navigate('Search', { mealType: 'dinner' })}
-        onNotificationPress={() => navigation.navigate('Notifications')}
-        onProfilePress={() => navigation.navigate('Profile')}
-        showTimeGreeting={true}
-                />
+                <MemoizedHeaderSection />
 
+                {/* Enhanced Promo Section with Toggle */}
                 <View style={styles.promoSection}>
-                    <MemoizedPromoCard 
-                        title="New recipe"
-                        subtitle="When you order $20+, you'll automatically get applied."
-                        buttonText="Lets Cook"
-                        onPress={handlers.promoPress}
-                        imageSource="https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=200&h=150&fit=crop"
-                    />
+                    {promoState.showPromoCarousel ? (
+                        <View style={styles.promoCarouselContainer}>
+                            <MemoizedPromoCarousel
+                                mealType="dinner" // Force dinner promos
+                                userProfile={userProfile}
+                                autoRotate={true}
+                                rotationInterval={5000}
+                                showControls={true}
+                                showMealTypeSelector={false} // Hide meal type selector for focused dinner experience
+                                onPromoPress={handlePromoPress}
+                                onError={handlePromoError}
+                                maxPromos={3} // Limit to 3 promos for better performance
+                                style={styles.promoCarouselStyle}
+                            />
+                        </View>
+                    ) : (
+                        <View style={styles.promoFallbackContainer}>
+                            {promoState.promoError ? (
+                                <View style={styles.promoErrorContainer}>
+                                    <Text style={styles.promoErrorText}>
+                                        Promotions temporarily unavailable
+                                    </Text>
+                                    <TouchableOpacity
+                                        style={styles.promoToggleButton}
+                                        onPress={togglePromoCarousel}
+                                    >
+                                        <Text style={styles.promoToggleText}>Try Again</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ) : (
+                                <View style={styles.promoSimpleContainer}>
+                                    {/* Fallback to your original promo card */}
+                                    <MemoizedPromoCard 
+                                        title="Comfort Dinner"
+                                        subtitle="Hearty meals for cozy evenings at home!"
+                                        buttonText="Get Cozy"
+                                        onPress={handlers.promoPress}
+                                        imageSource="https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=200&h=150&fit=crop"
+                                    />
+                                    
+                                    <TouchableOpacity
+                                        style={styles.promoToggleButton}
+                                        onPress={togglePromoCarousel}
+                                    >
+                                        <Text style={styles.promoToggleText}>Show Smart Promos</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </View>
+                    )}
                 </View>
                 
                 <View style={styles.inputSection}>
                     <MemoizedMealSearchInput 
-                        placeholder="Search breakfast, drinks, etc..."
+                        placeholder="Search dinner, steak, comfort food, etc..."
                         value={searchState.query}
                         onChangeText={handleSearchChange}
                         onSubmitEditing={handleSearchSubmit}
@@ -637,11 +753,11 @@ const DinnerScreen = memo(({ navigation }) => {
                         <MemoizedNutritionCategories 
                             categories={[
                                 { id: 1, name: 'Steak', emoji: '🥩' },
-                                { id: 2, name: 'Desserts', emoji: '🍰' },
-                                { id: 3, name: 'Breakfast', emoji: '🥞' },
-                                { id: 4, name: 'Fast Food', emoji: '🍔' },
-                                { id: 5, name: 'Sea Food', emoji: '🦐' },
-                                { id: 6, name: 'Pizza', emoji: '🍕' },
+                                { id: 2, name: 'Comfort', emoji: '🍲' },
+                                { id: 3, name: 'Seafood', emoji: '🦐' },
+                                { id: 4, name: 'Pizza', emoji: '🍕' },
+                                { id: 5, name: 'Pasta', emoji: '🍝' },
+                                { id: 6, name: 'Grilled', emoji: '🔥' },
                             ]}
                             onCategoryPress={handlers.categoryPress}
                             onSeeAllPress={handlers.categorySeeAll}
@@ -720,9 +836,55 @@ const styles = StyleSheet.create({
         width: '100%',
         overflow: 'hidden',
     },
+    
     promoSection: {
         marginTop: 10,
         marginBottom: 5,
+    },
+    
+    promoCarouselContainer: {
+        position: 'relative',
+    },
+    promoCarouselStyle: {
+        minHeight: 100,
+        maxHeight: 200,
+        marginHorizontal: -10,
+    },
+    promoToggleButton: {
+        alignSelf: 'center',
+        marginTop: 10,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    promoToggleText: {
+        fontSize: 12,
+        color: '#666',
+        fontWeight: '500',
+    },
+    promoFallbackContainer: {
+        minHeight: 120,
+    },
+    promoErrorContainer: {
+        alignItems: 'center',
+        padding: 20,
+        backgroundColor: '#FFF8F0',
+        borderRadius: 15,
+        borderWidth: 1,
+        borderColor: '#FFE4B5',
+    },
+    promoErrorText: {
+        fontSize: 14,
+        color: '#CC6600',
+        textAlign: 'center',
+        marginBottom: 10,
+        fontWeight: '500',
+    },
+    promoSimpleContainer: {
+        position: 'relative',
     },
     inputSection: {
         paddingHorizontal: 5,

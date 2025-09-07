@@ -1,4 +1,4 @@
-// BreakfastScreen.js - Production-optimized with buttery smooth animations
+// SnacksScreen.js - Updated with PromoCarousel integration for snacks content
 import React, { 
     memo, 
     useMemo, 
@@ -26,7 +26,7 @@ import {
     UIManager,
 } from "react-native";
 import { LinearGradient } from 'expo-linear-gradient';
-import { BreakfastWrapper, SnacksWrapper } from "../components/ScreenWrappers";
+import { SnacksWrapper } from "../components/ScreenWrappers";
 import HeaderSection from "../components/HeaderSection";
 import PromoCard from "../components/PromoCard";
 import NutritionCategories from "../components/NutritionCategories";
@@ -34,6 +34,10 @@ import EveningScene from "animatedScenes/EveningScene";
 import MealSearchInput from "../components/MealSearchInput";
 import FoodCardsGrid from "components/BreakfastRecommendedCards";
 import { MealService } from '../src/services/MealService';
+
+// Import the new promo components
+import PromoCarousel from '../components/PromoCarousel';
+import { promoManager, SAMPLE_USER_PROFILES, createUserProfile } from '../src/services/PromoDataManager';
 
 // Enable layout animations on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -43,12 +47,11 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 // Memoize screen dimensions outside component to prevent recalculation
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const SEARCH_DEBOUNCE_MS = 300;
-const ANIMATION_STAGGER_MS = 60; // Reduced for smoother feel
-const MAX_RESULT_ANIMATIONS = 20; // Limit for memory optimization
+const ANIMATION_STAGGER_MS = 60;
+const MAX_RESULT_ANIMATIONS = 20;
 
 // Animation configuration for production-level smoothness
 const ANIMATION_CONFIG = {
-    // Use higher tension/friction for snappier, more responsive animations
     SPRING: {
         tension: 150,
         friction: 12,
@@ -56,7 +59,6 @@ const ANIMATION_CONFIG = {
         restSpeedThreshold: 0.001,
         restDisplacementThreshold: 0.001,
     },
-    // Optimized timing for UI transitions
     TIMING_FAST: {
         duration: 200,
         useNativeDriver: true,
@@ -65,7 +67,6 @@ const ANIMATION_CONFIG = {
         duration: 300,
         useNativeDriver: true,
     },
-    // For search overlay transitions
     SEARCH_TRANSITION: {
         duration: 250,
         useNativeDriver: true,
@@ -78,9 +79,26 @@ const MemoizedPromoCard = memo(PromoCard);
 const MemoizedNutritionCategories = memo(NutritionCategories);
 const MemoizedFoodCardsGrid = memo(FoodCardsGrid);
 const MemoizedMealSearchInput = memo(MealSearchInput);
+const MemoizedPromoCarousel = memo(PromoCarousel);
 
 // Main component
-const SnacksScreen = memo(({ navigation }) => {
+const SnacksScreen = memo(({ navigation, route }) => {
+    // Get user profile from route params or create default for snack lovers
+    const userProfile = useMemo(() => {
+        if (route?.params?.userProfile) {
+            return route.params.userProfile;
+        }
+        
+        // Create a default user profile for snack enthusiasts
+        return createUserProfile({
+            audience: ['snack-lovers', 'students', 'busy-professionals'],
+            dietaryRestrictions: [],
+            budgetRange: [100, 500],
+            favoriteCategories: ['quick', 'convenient', 'energy', 'healthy'],
+            mealPreferences: { preferQuickSnacks: true },
+        });
+    }, [route?.params?.userProfile]);
+
     // Search state with better organization
     const [searchState, setSearchState] = useState({
         query: '',
@@ -90,13 +108,19 @@ const SnacksScreen = memo(({ navigation }) => {
         error: null,
     });
 
+    // Promo state
+    const [promoState, setPromoState] = useState({
+        showPromoCarousel: true,
+        promoError: null,
+    });
+
     // Animation refs organized and optimized
     const animationRefs = useRef({
         contentOpacity: new Animated.Value(1),
         searchResultsOpacity: new Animated.Value(0),
-        searchResultsTranslateY: new Animated.Value(30), // Reduced for subtlety
-        searchResultsScale: new Animated.Value(0.98), // Closer to 1 for smoother feel
-        resultCards: [], // Will be populated dynamically
+        searchResultsTranslateY: new Animated.Value(30),
+        searchResultsScale: new Animated.Value(0.98),
+        resultCards: [],
     }).current;
 
     // Debounced search ref
@@ -126,20 +150,66 @@ const SnacksScreen = memo(({ navigation }) => {
         };
     }, []);
 
+    // Promo event handlers
+    const handlePromoPress = useCallback((promo, index) => {
+        console.log('Snacks promo pressed:', promo.title, 'at index:', index);
+        
+        // Show detailed promo information for snacks
+        Alert.alert(
+            promo.title,
+            `${promo.subtitle}\n\n${promo.specialOffer || 'Special snack offer available!'}`,
+            [
+                { text: 'Maybe Later', style: 'cancel' },
+                { 
+                    text: promo.buttonText, 
+                    onPress: () => {
+                        // Navigate to specific snack categories based on promo
+                        if (promo.category === 'healthy') {
+                            console.log('Navigating to healthy snack options');
+                        } else if (promo.category === 'energy') {
+                            console.log('Navigating to energy snack options');
+                        } else if (promo.category === 'premium-treats' || promo.category === 'party') {
+                            console.log('Navigating to premium/party snack options');
+                        } else {
+                            console.log('Default snacks action');
+                        }
+                    }
+                }
+            ]
+        );
+    }, []);
+
+    // Handle promo carousel errors
+    const handlePromoError = useCallback((error) => {
+        console.warn('Snacks promo carousel error:', error);
+        setPromoState(prev => ({
+            ...prev,
+            promoError: error,
+            showPromoCarousel: false,
+        }));
+    }, []);
+
+    // Toggle promo carousel visibility
+    const togglePromoCarousel = useCallback(() => {
+        setPromoState(prev => ({
+            ...prev,
+            showPromoCarousel: !prev.showPromoCarousel,
+            promoError: null,
+        }));
+    }, []);
+
     // Optimized result card animation initialization
     const initializeResultCardAnimations = useCallback((count) => {
         const actualCount = Math.min(count, MAX_RESULT_ANIMATIONS);
         
-        // Only create new animations if needed
         while (animationRefs.resultCards.length < actualCount) {
             animationRefs.resultCards.push({
-                translateY: new Animated.Value(40), // Reduced for subtlety
+                translateY: new Animated.Value(40),
                 opacity: new Animated.Value(0),
                 scale: new Animated.Value(0.95),
             });
         }
         
-        // Reset only the animations we'll use
         for (let i = 0; i < actualCount; i++) {
             const cardAnim = animationRefs.resultCards[i];
             cardAnim.translateY.setValue(40);
@@ -153,9 +223,7 @@ const SnacksScreen = memo(({ navigation }) => {
         const actualCount = Math.min(results.length, MAX_RESULT_ANIMATIONS);
         initializeResultCardAnimations(actualCount);
 
-        // Use InteractionManager for better performance
         InteractionManager.runAfterInteractions(() => {
-            // Create all animations first, then start them together for better performance
             const animations = [];
             
             for (let i = 0; i < actualCount; i++) {
@@ -183,7 +251,6 @@ const SnacksScreen = memo(({ navigation }) => {
                 );
             }
             
-            // Start all animations
             Animated.parallel(animations).start();
         });
     }, [initializeResultCardAnimations, animationRefs.resultCards]);
@@ -195,7 +262,6 @@ const SnacksScreen = memo(({ navigation }) => {
             return;
         }
 
-        // Clear previous timeout
         if (searchTimeoutRef.current) {
             clearTimeout(searchTimeoutRef.current);
         }
@@ -213,7 +279,6 @@ const SnacksScreen = memo(({ navigation }) => {
                 isSearching: false 
             }));
 
-            // Animate results
             if (filteredResults.length > 0) {
                 requestAnimationFrame(() => {
                     animateResultCards(filteredResults);
@@ -225,7 +290,7 @@ const SnacksScreen = memo(({ navigation }) => {
             console.error('Search error:', error);
             setSearchState(prev => ({
                 ...prev,
-                error: 'Failed to search meals. Please try again.',
+                error: 'Failed to search snacks. Please try again.',
                 results: [],
                 isSearching: false,
             }));
@@ -247,14 +312,13 @@ const SnacksScreen = memo(({ navigation }) => {
     const enterSearchMode = useCallback(() => {
         setSearchState(prev => ({ ...prev, isSearchMode: true }));
 
-        // Parallel animations for smoother transition
         Animated.parallel([
             Animated.timing(animationRefs.contentOpacity, {
                 toValue: 0,
                 ...ANIMATION_CONFIG.TIMING_MEDIUM,
             }),
             Animated.sequence([
-                Animated.delay(150), // Start search results animation midway
+                Animated.delay(150),
                 Animated.parallel([
                     Animated.timing(animationRefs.searchResultsOpacity, {
                         toValue: 1,
@@ -276,7 +340,6 @@ const SnacksScreen = memo(({ navigation }) => {
     const exitSearchMode = useCallback(() => {
         Keyboard.dismiss();
 
-        // Reverse animation sequence
         Animated.parallel([
             Animated.timing(animationRefs.searchResultsOpacity, {
                 toValue: 0,
@@ -291,12 +354,10 @@ const SnacksScreen = memo(({ navigation }) => {
                 ...ANIMATION_CONFIG.TIMING_FAST,
             }),
         ]).start(() => {
-            // Fade in main content
             Animated.timing(animationRefs.contentOpacity, {
                 toValue: 1,
                 ...ANIMATION_CONFIG.TIMING_MEDIUM,
             }).start(() => {
-                // Clean up state
                 setSearchState({
                     query: '',
                     isSearchMode: false,
@@ -305,7 +366,6 @@ const SnacksScreen = memo(({ navigation }) => {
                     error: null,
                 });
 
-                // Reset card animations
                 animationRefs.resultCards.forEach(anim => {
                     anim.translateY.setValue(40);
                     anim.opacity.setValue(0);
@@ -325,7 +385,6 @@ const SnacksScreen = memo(({ navigation }) => {
             error: null,
         });
 
-        // Reset all animations instantly
         animationRefs.contentOpacity.setValue(1);
         animationRefs.searchResultsOpacity.setValue(0);
         animationRefs.searchResultsTranslateY.setValue(30);
@@ -365,10 +424,11 @@ const SnacksScreen = memo(({ navigation }) => {
     const handlers = useMemo(() => ({
         categoryPress: (category) => Alert.alert("Category", `Selected: ${category.name}`),
         categorySeeAll: () => Alert.alert("Categories", "View all categories"),
-        foodCardsSeeAll: () => Alert.alert("Popular Recipes", "View all popular recipes"),
-        itemPress: (item) => Alert.alert("Food Item", `Selected: ${item.name}`),
-        recommendedSeeAll: () => Alert.alert("Recommended", "View all recommended items"),
-        promoPress: () => Alert.alert("Promo", "New recipe promotion activated!"),
+        foodCardsSeeAll: () => Alert.alert("Popular Snacks", "View all popular snacks"),
+        itemPress: (item) => Alert.alert("Snack Item", `Selected: ${item.name}`),
+        recommendedSeeAll: () => Alert.alert("Recommended", "View all recommended snacks"),
+        // Legacy promo press handler for the old promo card
+        promoPress: () => Alert.alert("Promo", "New snack promotion activated!"),
     }), []);
 
     const handleFoodItemPress = useCallback((item) => {
@@ -376,29 +436,24 @@ const SnacksScreen = memo(({ navigation }) => {
             mealData: {
                 id: item.id,
                 name: item.name,
-                category: item.category || 'Breakfast',
-                prepTime: '5 min',
+                category: item.category || 'Snacks',
+                prepTime: '2 min',
                 kcal: item.kcal,
                 protein: item.protein,
                 carbs: item.carbs,
                 fats: item.fats,
-                servings: 2,
+                servings: 1,
                 image: item.image,
                 ingredients: [
-                    { quantity: '1 cup', item: 'Rolled oats' },
-                    { quantity: '2 cups', item: 'Water or milk' },
-                    { quantity: '1 tbsp', item: 'Honey or maple syrup' },
-                    { quantity: '1/4 cup', item: 'Fresh berries' },
-                    { quantity: '1 tbsp', item: 'Chia seeds (optional)' },
-                    { quantity: '1/4 tsp', item: 'Vanilla extract' },
+                    { quantity: '1 pack', item: 'Mixed nuts' },
+                    { quantity: '1 tbsp', item: 'Honey' },
+                    { quantity: '1/4 cup', item: 'Dried fruits' },
+                    { quantity: '1 tsp', item: 'Chia seeds' },
                 ],
                 instructions: [
-                    'Bring water or milk to a boil in a medium saucepan.',
-                    'Add oats and reduce heat to medium-low.',
-                    'Cook for 5-7 minutes, stirring occasionally until creamy.',
-                    'Remove from heat and stir in sweetener and vanilla.',
-                    'Top with fresh berries, chia seeds, and serve hot.',
-                    'Add nuts or granola for extra crunch if desired.'
+                    'Open the snack pack.',
+                    'Mix ingredients if needed.',
+                    'Enjoy your healthy snack!',
                 ]
             }
         });
@@ -409,23 +464,21 @@ const SnacksScreen = memo(({ navigation }) => {
             mealData: {
                 id: meal.id,
                 name: meal.mealName,
-                category: 'Breakfast',
+                category: 'Snacks',
                 prepTime: meal.prepTime,
                 kcal: meal.calories,
-                protein: '25g',
-                carbs: '30g', 
-                fats: '15g',
-                servings: 2,
+                protein: '15g',
+                carbs: '20g', 
+                fats: '10g',
+                servings: 1,
                 image: meal.imageUri,
                 ingredients: [
-                    { quantity: '1 cup', item: 'Main ingredient' },
-                    { quantity: '2 tbsp', item: 'Seasoning' },
-                    { quantity: '1/2 cup', item: 'Additional ingredients' },
+                    { quantity: '1 serving', item: 'Snack ingredients' },
+                    { quantity: '1 tbsp', item: 'Seasoning' },
                 ],
                 instructions: [
-                    'Prepare all ingredients as specified.',
-                    'Follow cooking instructions carefully.',
-                    'Serve hot and enjoy your healthy meal.',
+                    'Prepare snack as specified.',
+                    'Enjoy your tasty treat.',
                 ]
             }
         });
@@ -433,7 +486,6 @@ const SnacksScreen = memo(({ navigation }) => {
 
     // Optimized search result renderer
     const renderSearchResult = useCallback(({ item, index }) => {
-        // Only render up to max limit
         if (index >= MAX_RESULT_ANIMATIONS) return null;
         
         const cardAnimation = animationRefs.resultCards[index];
@@ -456,7 +508,7 @@ const SnacksScreen = memo(({ navigation }) => {
                 <TouchableOpacity
                     style={styles.resultCardContent}
                     onPress={() => handleMealPress(item)}
-                    activeOpacity={0.85} // Slightly higher for better feedback
+                    activeOpacity={0.85}
                 >
                     <View style={styles.resultImageContainer}>
                         <View style={styles.resultImagePlaceholder} />
@@ -489,12 +541,12 @@ const SnacksScreen = memo(({ navigation }) => {
         <View style={styles.emptyState}>
             <Text style={styles.emptyStateEmoji}>🔍</Text>
             <Text style={styles.emptyStateTitle}>
-                {searchState.query ? 'No breakfast items found' : 'Start searching for breakfast'}
+                {searchState.query ? 'No snack items found' : 'Start searching for snacks'}
             </Text>
             <Text style={styles.emptyStateSubtitle}>
                 {searchState.query
-                    ? 'Try different keywords or browse our breakfast categories'
-                    : 'Type in the search box above to find delicious breakfast meals'
+                    ? 'Try different keywords or browse our snack categories'
+                    : 'Type in the search box above to find delicious snacks'
                 }
             </Text>
         </View>
@@ -502,8 +554,8 @@ const SnacksScreen = memo(({ navigation }) => {
 
     const renderLoadingState = useMemo(() => (
         <View style={styles.loadingSpinnerContainer}>
-            <ActivityIndicator size="large" color="#FF6B35" />
-            <Text style={styles.loadingText}>Searching for breakfast...</Text>
+            <ActivityIndicator size="large" color="#5AC8FA" />
+            <Text style={styles.loadingText}>Searching for snacks...</Text>
         </View>
     ), []);
 
@@ -604,19 +656,62 @@ const SnacksScreen = memo(({ navigation }) => {
             <View style={responsiveStyles.contentSection}>
                 <MemoizedHeaderSection />
 
+                {/* Enhanced Promo Section with PromoCarousel for Snacks */}
                 <View style={styles.promoSection}>
-                    <MemoizedPromoCard 
-                        title="New recipe"
-                        subtitle="When you order $20+, you'll automatically get applied."
-                        buttonText="Lets Cook"
-                        onPress={handlers.promoPress}
-                        imageSource="https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=200&h=150&fit=crop"
-                    />
+                    {promoState.showPromoCarousel ? (
+                        <View style={styles.promoCarouselContainer}>
+                            <MemoizedPromoCarousel
+                                mealType="snacks" // Force snacks promos
+                                userProfile={userProfile}
+                                autoRotate={true}
+                                rotationInterval={6000} // Slightly longer for snacks
+                                showControls={true}
+                                showMealTypeSelector={false} // Hide meal type selector for focused snacks experience
+                                onPromoPress={handlePromoPress}
+                                maxPromos={3}
+                                style={styles.promoCarouselStyle}
+                            />
+                        </View>
+                    ) : (
+                        <View style={styles.promoFallbackContainer}>
+                            {promoState.promoError ? (
+                                <View style={styles.promoErrorContainer}>
+                                    <Text style={styles.promoErrorText}>
+                                        Snack promotions temporarily unavailable
+                                    </Text>
+                                    <TouchableOpacity
+                                        style={styles.promoToggleButton}
+                                        onPress={togglePromoCarousel}
+                                    >
+                                        <Text style={styles.promoToggleText}>Try Again</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ) : (
+                                <View style={styles.promoSimpleContainer}>
+                                    {/* Fallback to original promo card with snacks theme */}
+                                    <MemoizedPromoCard 
+                                        title="Snack Special"
+                                        subtitle="Get 25% off on healthy snacks when you order $15+!"
+                                        buttonText="Snack Time"
+                                        onPress={handlers.promoPress}
+                                        imageSource="https://images.unsplash.com/photo-1559656914-a30970c1affd?w=200&h=150&fit=crop"
+                                    />
+                                    
+                                    <TouchableOpacity
+                                        style={styles.promoToggleButton}
+                                        onPress={togglePromoCarousel}
+                                    >
+                                        <Text style={styles.promoToggleText}>Show Smart Promos</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </View>
+                    )}
                 </View>
                 
                 <View style={styles.inputSection}>
                     <MemoizedMealSearchInput 
-                        placeholder="Search breakfast, drinks, etc..."
+                        placeholder="Search snacks, drinks, etc..."
                         value={searchState.query}
                         onChangeText={handleSearchChange}
                         onSubmitEditing={handleSearchSubmit}
@@ -628,12 +723,12 @@ const SnacksScreen = memo(({ navigation }) => {
                     <View style={styles.categoriesWrapper}>
                         <MemoizedNutritionCategories 
                             categories={[
-                                { id: 1, name: 'Steak', emoji: '🥩' },
-                                { id: 2, name: 'Desserts', emoji: '🍰' },
-                                { id: 3, name: 'Breakfast', emoji: '🥞' },
-                                { id: 4, name: 'Fast Food', emoji: '🍔' },
-                                { id: 5, name: 'Sea Food', emoji: '🦐' },
-                                { id: 6, name: 'Pizza', emoji: '🍕' },
+                                { id: 1, name: 'Healthy', emoji: '🥗' },
+                                { id: 2, name: 'Chips', emoji: '🍟' },
+                                { id: 3, name: 'Nuts', emoji: '🥜' },
+                                { id: 4, name: 'Sweets', emoji: '🍬' },
+                                { id: 5, name: 'Drinks', emoji: '🥤' },
+                                { id: 6, name: 'Energy', emoji: '⚡' },
                             ]}
                             onCategoryPress={handlers.categoryPress}
                             onSeeAllPress={handlers.categorySeeAll}
@@ -712,9 +807,55 @@ const styles = StyleSheet.create({
         width: '100%',
         overflow: 'hidden',
     },
+    
     promoSection: {
         marginTop: 10,
         marginBottom: 5,
+    },
+    
+    promoCarouselContainer: {
+        position: 'relative',
+    },
+    promoCarouselStyle: {
+        minHeight: 100,
+        maxHeight: 200,
+        marginHorizontal: -10,
+    },
+    promoToggleButton: {
+        alignSelf: 'center',
+        marginTop: 10,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    promoToggleText: {
+        fontSize: 12,
+        color: '#666',
+        fontWeight: '500',
+    },
+    promoFallbackContainer: {
+        minHeight: 120,
+    },
+    promoErrorContainer: {
+        alignItems: 'center',
+        padding: 20,
+        backgroundColor: '#FFF8F0',
+        borderRadius: 15,
+        borderWidth: 1,
+        borderColor: '#FFE4B5',
+    },
+    promoErrorText: {
+        fontSize: 14,
+        color: '#CC6600',
+        textAlign: 'center',
+        marginBottom: 10,
+        fontWeight: '500',
+    },
+    promoSimpleContainer: {
+        position: 'relative',
     },
     inputSection: {
         paddingHorizontal: 5,
@@ -806,16 +947,16 @@ const styles = StyleSheet.create({
         marginRight: 6,
         marginBottom: 4,
         borderWidth: 0.5,
-        borderColor: 'rgba(0,102,204,0.1)',
+        borderColor: 'rgba(90,200,250,0.2)',
     },
     tagText: {
         fontSize: 12,
-        color: '#0066CC',
+        color: '#5AC8FA',
         fontWeight: '500',
     },
     rating: {
         fontSize: 14,
-        color: '#FF6B35',
+        color: '#5AC8FA',
         fontWeight: '600',
     },
     separator: {
@@ -889,11 +1030,11 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     retryButton: {
-        backgroundColor: '#FF6B35',
+        backgroundColor: '#5AC8FA',
         paddingHorizontal: 24,
         paddingVertical: 12,
         borderRadius: 24,
-        shadowColor: '#FF6B35',
+        shadowColor: '#5AC8FA',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 8,

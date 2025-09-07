@@ -1,4 +1,4 @@
-// BreakfastScreen.js - Production-optimized with buttery smooth animations
+// LunchScreen.js - Updated with PromoCarousel integration
 import React, { 
     memo, 
     useMemo, 
@@ -35,6 +35,10 @@ import MealSearchInput from "../components/MealSearchInput";
 import FoodCardsGrid from "components/BreakfastRecommendedCards";
 import { MealService } from '../src/services/MealService';
 import AfternoonScene from "../animatedScenes/AfternoonScene";
+
+// Import the new promo components
+import PromoCarousel from '../components/PromoCarousel';
+import { promoManager, SAMPLE_USER_PROFILES, createUserProfile } from '../src/services/PromoDataManager';
 
 // Enable layout animations on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -79,9 +83,26 @@ const MemoizedPromoCard = memo(PromoCard);
 const MemoizedNutritionCategories = memo(NutritionCategories);
 const MemoizedFoodCardsGrid = memo(FoodCardsGrid);
 const MemoizedMealSearchInput = memo(MealSearchInput);
+const MemoizedPromoCarousel = memo(PromoCarousel);
 
 // Main component
-const LunchScreen = memo(({ navigation }) => {
+const LunchScreen = memo(({ navigation, route }) => {
+    // Get user profile from route params or create default
+    const userProfile = useMemo(() => {
+        if (route?.params?.userProfile) {
+            return route.params.userProfile;
+        }
+        
+        // Create a default user profile for lunch lovers
+        return createUserProfile({
+            audience: ['busy-professionals', 'health-conscious'],
+            dietaryRestrictions: [],
+            budgetRange: [300, 900],
+            favoriteCategories: ['power', 'light', 'express'],
+            mealPreferences: { preferQuickMeals: true, energyBoost: true },
+        });
+    }, [route?.params?.userProfile]);
+
     // Search state with better organization
     const [searchState, setSearchState] = useState({
         query: '',
@@ -89,6 +110,12 @@ const LunchScreen = memo(({ navigation }) => {
         results: [],
         isSearching: false,
         error: null,
+    });
+
+    // Promo state
+    const [promoState, setPromoState] = useState({
+        showPromoCarousel: true,
+        promoError: null,
     });
 
     // Animation refs organized and optimized
@@ -125,6 +152,59 @@ const LunchScreen = memo(({ navigation }) => {
             gradientWidth: Math.min(Math.max(screenWidth * 0.08, 30), 60),
             searchResultsTop: isTablet ? 450 : 500,
         };
+    }, []);
+
+    // Promo event handlers
+    const handlePromoPress = useCallback((promo, index) => {
+        console.log('Promo pressed:', promo.title, 'at index:', index);
+        
+        // Show detailed promo information
+        Alert.alert(
+            promo.title,
+            `${promo.subtitle}\n\n${promo.specialOffer || 'Special lunch offer available!'}`,
+            [
+                { text: 'Maybe Later', style: 'cancel' },
+                { 
+                    text: promo.buttonText, 
+                    onPress: () => {
+                        // Navigate to a specific lunch category or items
+                        // You can customize this based on the promo category
+                        if (promo.category === 'power') {
+                            // Navigate to power lunch options
+                            console.log('Navigating to power lunch options');
+                        } else if (promo.category === 'light') {
+                            // Navigate to light lunch options
+                            console.log('Navigating to light lunch options');
+                        } else if (promo.category === 'express') {
+                            // Navigate to express lunch options
+                            console.log('Navigating to express lunch options');
+                        } else {
+                            // Default navigation
+                            console.log('Default promo action');
+                        }
+                    }
+                }
+            ]
+        );
+    }, []);
+
+    // Handle promo carousel errors
+    const handlePromoError = useCallback((error) => {
+        console.warn('Promo carousel error:', error);
+        setPromoState(prev => ({
+            ...prev,
+            promoError: error,
+            showPromoCarousel: false,
+        }));
+    }, []);
+
+    // Toggle promo carousel visibility
+    const togglePromoCarousel = useCallback(() => {
+        setPromoState(prev => ({
+            ...prev,
+            showPromoCarousel: !prev.showPromoCarousel,
+            promoError: null,
+        }));
     }, []);
 
     // Optimized result card animation initialization
@@ -369,6 +449,7 @@ const LunchScreen = memo(({ navigation }) => {
         foodCardsSeeAll: () => Alert.alert("Popular Recipes", "View all popular recipes"),
         itemPress: (item) => Alert.alert("Food Item", `Selected: ${item.name}`),
         recommendedSeeAll: () => Alert.alert("Recommended", "View all recommended items"),
+        // Legacy promo press handler for the old promo card
         promoPress: () => Alert.alert("Promo", "New recipe promotion activated!"),
     }), []);
 
@@ -377,8 +458,8 @@ const LunchScreen = memo(({ navigation }) => {
             mealData: {
                 id: item.id,
                 name: item.name,
-                category: item.category || 'Breakfast',
-                prepTime: '5 min',
+                category: item.category || 'Lunch',
+                prepTime: '15 min',
                 kcal: item.kcal,
                 protein: item.protein,
                 carbs: item.carbs,
@@ -386,20 +467,19 @@ const LunchScreen = memo(({ navigation }) => {
                 servings: 2,
                 image: item.image,
                 ingredients: [
-                    { quantity: '1 cup', item: 'Rolled oats' },
-                    { quantity: '2 cups', item: 'Water or milk' },
-                    { quantity: '1 tbsp', item: 'Honey or maple syrup' },
-                    { quantity: '1/4 cup', item: 'Fresh berries' },
-                    { quantity: '1 tbsp', item: 'Chia seeds (optional)' },
-                    { quantity: '1/4 tsp', item: 'Vanilla extract' },
+                    { quantity: '200g', item: 'Grilled chicken breast' },
+                    { quantity: '1 cup', item: 'Mixed vegetables' },
+                    { quantity: '1/2 cup', item: 'Brown rice' },
+                    { quantity: '2 tbsp', item: 'Olive oil' },
+                    { quantity: '1 tbsp', item: 'Herbs and spices' },
                 ],
                 instructions: [
-                    'Bring water or milk to a boil in a medium saucepan.',
-                    'Add oats and reduce heat to medium-low.',
-                    'Cook for 5-7 minutes, stirring occasionally until creamy.',
-                    'Remove from heat and stir in sweetener and vanilla.',
-                    'Top with fresh berries, chia seeds, and serve hot.',
-                    'Add nuts or granola for extra crunch if desired.'
+                    'Season chicken breast with herbs and spices.',
+                    'Grill chicken until cooked through, about 6-8 minutes per side.',
+                    'Steam mixed vegetables until tender.',
+                    'Cook brown rice according to package instructions.',
+                    'Serve chicken over rice with steamed vegetables.',
+                    'Drizzle with olive oil and enjoy your power lunch!'
                 ]
             }
         });
@@ -410,7 +490,7 @@ const LunchScreen = memo(({ navigation }) => {
             mealData: {
                 id: meal.id,
                 name: meal.mealName,
-                category: 'Breakfast',
+                category: 'Lunch',
                 prepTime: meal.prepTime,
                 kcal: meal.calories,
                 protein: '25g',
@@ -490,12 +570,12 @@ const LunchScreen = memo(({ navigation }) => {
         <View style={styles.emptyState}>
             <Text style={styles.emptyStateEmoji}>🔍</Text>
             <Text style={styles.emptyStateTitle}>
-                {searchState.query ? 'No breakfast items found' : 'Start searching for breakfast'}
+                {searchState.query ? 'No lunch items found' : 'Start searching for lunch'}
             </Text>
             <Text style={styles.emptyStateSubtitle}>
                 {searchState.query
-                    ? 'Try different keywords or browse our breakfast categories'
-                    : 'Type in the search box above to find delicious breakfast meals'
+                    ? 'Try different keywords or browse our lunch categories'
+                    : 'Type in the search box above to find delicious lunch meals'
                 }
             </Text>
         </View>
@@ -504,7 +584,7 @@ const LunchScreen = memo(({ navigation }) => {
     const renderLoadingState = useMemo(() => (
         <View style={styles.loadingSpinnerContainer}>
             <ActivityIndicator size="large" color="#FF6B35" />
-            <Text style={styles.loadingText}>Searching for breakfast...</Text>
+            <Text style={styles.loadingText}>Searching for lunch...</Text>
         </View>
     ), []);
 
@@ -605,19 +685,63 @@ const LunchScreen = memo(({ navigation }) => {
             <View style={responsiveStyles.contentSection}>
                 <MemoizedHeaderSection />
 
+                {/* Enhanced Promo Section with Toggle */}
                 <View style={styles.promoSection}>
-                    <MemoizedPromoCard 
-                        title="New recipe"
-                        subtitle="When you order $20+, you'll automatically get applied."
-                        buttonText="Lets Cook"
-                        onPress={handlers.promoPress}
-                        imageSource="https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=200&h=150&fit=crop"
-                    />
+                    {promoState.showPromoCarousel ? (
+                        <View style={styles.promoCarouselContainer}>
+                            <MemoizedPromoCarousel
+                                mealType="lunch" // Force lunch promos
+                                userProfile={userProfile}
+                                autoRotate={true}
+                                rotationInterval={5000}
+                                showControls={true}
+                                showMealTypeSelector={false} // Hide meal type selector for focused lunch experience
+                                onPromoPress={handlePromoPress}
+                                onError={handlePromoError}
+                                maxPromos={3} // Limit to 3 promos for better performance
+                                style={styles.promoCarouselStyle}
+                            />
+                        </View>
+                    ) : (
+                        <View style={styles.promoFallbackContainer}>
+                            {promoState.promoError ? (
+                                <View style={styles.promoErrorContainer}>
+                                    <Text style={styles.promoErrorText}>
+                                        Promotions temporarily unavailable
+                                    </Text>
+                                    <TouchableOpacity
+                                        style={styles.promoToggleButton}
+                                        onPress={togglePromoCarousel}
+                                    >
+                                        <Text style={styles.promoToggleText}>Try Again</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ) : (
+                                <View style={styles.promoSimpleContainer}>
+                                    {/* Fallback to your original promo card */}
+                                    <MemoizedPromoCard 
+                                        title="Power Lunch"
+                                        subtitle="High-energy meals for productive afternoons!"
+                                        buttonText="Power Up"
+                                        onPress={handlers.promoPress}
+                                        imageSource="https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200&h=150&fit=crop"
+                                    />
+                                    
+                                    <TouchableOpacity
+                                        style={styles.promoToggleButton}
+                                        onPress={togglePromoCarousel}
+                                    >
+                                        <Text style={styles.promoToggleText}>Show Smart Promos</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </View>
+                    )}
                 </View>
                 
                 <View style={styles.inputSection}>
                     <MemoizedMealSearchInput 
-                        placeholder="Search breakfast, drinks, etc..."
+                        placeholder="Search lunch, power meals, etc..."
                         value={searchState.query}
                         onChangeText={handleSearchChange}
                         onSubmitEditing={handleSearchSubmit}
@@ -629,12 +753,12 @@ const LunchScreen = memo(({ navigation }) => {
                     <View style={styles.categoriesWrapper}>
                         <MemoizedNutritionCategories 
                             categories={[
-                                { id: 1, name: 'Steak', emoji: '🥩' },
-                                { id: 2, name: 'Desserts', emoji: '🍰' },
-                                { id: 3, name: 'Lunch', emoji: '🥞' },
-                                { id: 4, name: 'Fast Food', emoji: '🍔' },
-                                { id: 5, name: 'Sea Food', emoji: '🦐' },
-                                { id: 6, name: 'Pizza', emoji: '🍕' },
+                                { id: 1, name: 'Power', emoji: '⚡' },
+                                { id: 2, name: 'Light', emoji: '🥗' },
+                                { id: 3, name: 'Express', emoji: '🚀' },
+                                { id: 4, name: 'Healthy', emoji: '🥬' },
+                                { id: 5, name: 'Comfort', emoji: '🍲' },
+                                { id: 6, name: 'Protein', emoji: '🥩' },
                             ]}
                             onCategoryPress={handlers.categoryPress}
                             onSeeAllPress={handlers.categorySeeAll}
@@ -713,9 +837,55 @@ const styles = StyleSheet.create({
         width: '100%',
         overflow: 'hidden',
     },
+    
     promoSection: {
         marginTop: 10,
         marginBottom: 5,
+    },
+    
+    promoCarouselContainer: {
+        position: 'relative',
+    },
+    promoCarouselStyle: {
+        minHeight: 100,
+        maxHeight: 200,
+        marginHorizontal: -10,
+    },
+    promoToggleButton: {
+        alignSelf: 'center',
+        marginTop: 10,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    promoToggleText: {
+        fontSize: 12,
+        color: '#666',
+        fontWeight: '500',
+    },
+    promoFallbackContainer: {
+        minHeight: 120,
+    },
+    promoErrorContainer: {
+        alignItems: 'center',
+        padding: 20,
+        backgroundColor: '#FFF8F0',
+        borderRadius: 15,
+        borderWidth: 1,
+        borderColor: '#FFE4B5',
+    },
+    promoErrorText: {
+        fontSize: 14,
+        color: '#CC6600',
+        textAlign: 'center',
+        marginBottom: 10,
+        fontWeight: '500',
+    },
+    promoSimpleContainer: {
+        position: 'relative',
     },
     inputSection: {
         paddingHorizontal: 5,
