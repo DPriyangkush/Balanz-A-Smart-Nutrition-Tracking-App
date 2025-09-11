@@ -3,6 +3,13 @@ import React from 'react'
 import { ProgressWrapper } from '../components/ScreenWrappers'
 import CircularProgress from 'ProgressComponents/CircularProgress'
 import EnergySourcesCard from 'ProgressComponents/EnergySources'
+import StepsCard from 'ProgressComponents/StepsCard'
+import SleepCard from 'ProgressComponents/SleepCard'
+import ExerciseCard from 'ProgressComponents/ExerciseCard'
+import HeartCard from 'ProgressComponents/HeartCard'
+import WaterCard from 'ProgressComponents/WaterCard'
+import CaloriesCard from 'ProgressComponents/CaloriesCard'
+import CyclingCard from 'ProgressComponents/CyclingCard'
 
 const ProgressScreen = () => {
   const { width } = Dimensions.get('window');
@@ -25,6 +32,21 @@ const ProgressScreen = () => {
         <View style={{ marginTop: -120 }}>
           <EnergySourcesCard />
         </View>
+
+        <StepsCard />
+
+        <SleepCard />
+
+        <ExerciseCard />
+
+        <HeartCard />
+
+        <WaterCard />
+
+        <CaloriesCard />
+
+        <CyclingCard />
+        
       </View>
     </ProgressWrapper>
   )

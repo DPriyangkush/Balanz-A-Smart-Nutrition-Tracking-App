@@ -12,7 +12,7 @@ const { width } = Dimensions.get('window');
 const EnergySourcesCard = ({ 
   title = 'Main uses of energy sources',
   data = [
-    { label: 'Protien', percentage: 36, color: '#4CAF50' },
+    { label: 'Protien', percentage: 42, color: '#4CAF50' },
     { label: 'Carbs', percentage: 17, color: '#2196F3' },
     { label: 'Fats', percentage: 12, color: '#9E9E9E' },
   ],
