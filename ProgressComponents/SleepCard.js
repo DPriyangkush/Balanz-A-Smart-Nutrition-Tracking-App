@@ -1,40 +1,22 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Path, Circle } from 'react-native-svg';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 
 const SleepCard = ({ hours = 7, minutes = 30 }) => {
-  const totalMinutes = hours * 60 + minutes;
-  const sleepAngle = (totalMinutes / (8 * 60)) * 270; // 270 degrees for 8 hours
-  
-  const createArc = (startAngle, endAngle, radius) => {
-    const start = polarToCartesian(50, 50, radius, endAngle);
-    const end = polarToCartesian(50, 50, radius, startAngle);
-    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-    
-    return [
-      "M", start.x, start.y,
-      "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y
-    ].join(" ");
-  };
-  
-  const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
-    const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
-    return {
-      x: centerX + (radius * Math.cos(angleInRadians)),
-      y: centerY + (radius * Math.sin(angleInRadians))
-    };
-  };
-
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.icon}>😴</Text>
+        <View style={styles.iconContainer}>
+          <FontAwesome5 name="bed" size={16} color="white" />
+        </View>
         <Text style={styles.title}>Sleep</Text>
       </View>
-      
+            
       <View style={styles.timeContainer}>
-        <Text style={styles.time}>{hours}:{minutes.toString().padStart(2, '0')}</Text>
-        <Text style={styles.timeLabel}>hr</Text>
+        <Text style={styles.hours}>{hours}</Text>
+        <Text style={styles.hoursLabel}>h</Text>
+        <Text style={styles.minutes}>{minutes}</Text>
+        <Text style={styles.minutesLabel}>m</Text>
       </View>
     </View>
   );
@@ -43,42 +25,62 @@ const SleepCard = ({ hours = 7, minutes = 30 }) => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#1C1C1E',
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 16,
+    padding: 16,
     width: 180,
-    height: 140,
+    height: 120,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
   },
-  icon: {
-    fontSize: 16,
-    marginRight: 8,
+  iconContainer: {
+    backgroundColor: "#4ECDC4",
+    padding: 4,
+    borderRadius: 8,
+    marginRight: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 24,
+    height: 24,
   },
   title: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '500',
+    fontFamily: 'Inter-SemiBold',
   },
   timeContainer: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: 15,
   },
-  time: {
+  hours: {
     color: 'white',
-    fontSize: 32,
-    fontWeight: '700',
+    fontSize: 40,
+    fontWeight: '100',
+    fontFamily: 'Inter',
   },
-  timeLabel: {
+  hoursLabel: {
     color: '#8E8E93',
-    fontSize: 16,
-    fontWeight: '500',
-    marginLeft: 4,
+    fontSize: 24,
+    fontWeight: '100',
+    marginRight: 8,
+    fontFamily: 'Inter',
   },
-  
+  minutes: {
+    color: 'white',
+    fontSize: 40,
+    fontWeight: '100',
+    fontFamily: 'Inter',
+  },
+  minutesLabel: {
+    color: '#8E8E93',
+    fontSize: 24,
+    fontWeight: '100',
+    marginLeft: 2,
+    fontFamily: "Inter",
+  },
 });
 
 export default SleepCard;

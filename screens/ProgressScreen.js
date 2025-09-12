@@ -1,4 +1,4 @@
-import { View, Text, Dimensions, StyleSheet } from 'react-native'
+import { View, Text, Dimensions, StyleSheet, TouchableOpacity } from 'react-native'
 import React from 'react'
 import { ProgressWrapper } from '../components/ScreenWrappers'
 import CircularProgress from 'ProgressComponents/CircularProgress'
@@ -33,8 +33,9 @@ const ProgressScreen = () => {
           <EnergySourcesCard />
         </View>
 
+        <TouchableOpacity onPress={() => console.log('Steps Card Pressed')}>
         <StepsCard />
-
+        </TouchableOpacity>
         <SleepCard />
 
         <ExerciseCard />

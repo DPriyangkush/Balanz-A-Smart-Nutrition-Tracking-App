@@ -2,14 +2,16 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import Animated, { useSharedValue, useAnimatedProps, withTiming } from 'react-native-reanimated';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
+
 const StepsCard = ({ steps = 7500, goal = 10000 }) => {
   const progress = steps / goal;
-  const circumference = 2 * Math.PI * 45; // radius = 45
+  const circumference = 2 * Math.PI * 60; // radius = 60
   const strokeDashoffset = useSharedValue(circumference);
-  
+    
   React.useEffect(() => {
     strokeDashoffset.value = withTiming(circumference * (1 - progress), {
       duration: 1500,
@@ -23,36 +25,48 @@ const StepsCard = ({ steps = 7500, goal = 10000 }) => {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.icon}>👟</Text>
+        <View style={styles.iconContainer}>
+          <MaterialIcons name="directions-run" size={16} color="white" />
+        </View>
         <Text style={styles.title}>Steps</Text>
       </View>
-      
+            
       <View style={styles.chartContainer}>
-        <Svg width="120" height="120" style={styles.chart}>
-          {/* Background circle */}
+        <Svg width="140" height="140" style={styles.chart}>
+          {/* Inner dotted circle */}
           <Circle
-            cx="60"
-            cy="60"
+            cx="70"
+            cy="70"
             r="45"
             fill="none"
-            stroke="#2A2A2A"
-            strokeWidth="8"
+            stroke="#FF9F0A"
+            strokeWidth="1"
+            strokeDasharray="2,4"
+          />
+          {/* Background circle */}
+          <Circle
+            cx="70"
+            cy="70"
+            r="60"
+            fill="none"
+            stroke="#333333"
+            strokeWidth="12"
           />
           {/* Progress circle */}
           <AnimatedCircle
-            cx="60"
-            cy="60"
-            r="45"
+            cx="70"
+            cy="70"
+            r="60"
             fill="none"
-            stroke="#FF9500"
-            strokeWidth="8"
+            stroke="#FF9F0A"
+            strokeWidth="12"
             strokeLinecap="round"
             strokeDasharray={circumference}
             animatedProps={animatedProps}
-            transform="rotate(-90 60 60)"
+            transform="rotate(-90 70 70)"
           />
         </Svg>
-        
+                
         <View style={styles.centerContent}>
           <Text style={styles.stepsCount}>{steps.toLocaleString()}</Text>
           <Text style={styles.stepsLabel}>Steps</Text>
@@ -65,30 +79,37 @@ const StepsCard = ({ steps = 7500, goal = 10000 }) => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#1C1C1E',
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 16,
+    padding: 16,
     width: 180,
-    height: 180,
+    height: 200,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 20,
+       
   },
-  icon: {
-    fontSize: 16,
-    marginRight: 8,
+  iconContainer: {
+    backgroundColor: "#ffab2ed1",
+    padding: 4,
+    borderRadius: 8,
+    marginRight: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 26,
+    height: 26,
   },
   title: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '500',
+    fontFamily: 'Inter-SemiBold',
   },
   chartContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    top: 25,
-    position: 'relative',
+    flex: 1,
   },
   chart: {
     position: 'absolute',
@@ -101,11 +122,13 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 24,
     fontWeight: '700',
+    marginBottom: 2,
   },
   stepsLabel: {
     color: '#8E8E93',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '500',
+    fontFamily: 'Inter',
   },
 });
 
